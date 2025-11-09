@@ -1,6 +1,6 @@
 package com.jayden.bluetooth.data.model
 
-enum class BluetoothLocalState {
+enum class BluetoothState {
     STATE_OFF,
     STATE_TURNING_ON,
     STATE_ON,
