@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="BluetoothStatusView">
+        <attr name="idleColor" format="color"/>
+        <attr name="pairColor" format="color"/>
+        <attr name="connectedColor" format="color"/>
+        <attr name="inactiveAlpha" format="float"/>
+        <attr name="idleOffBlinkRate" format="integer"/>
+        <attr name="scanOffBlinkRate" format="integer"/>
+        <attr name="pairOffBlinkRate" format="integer"/>
+        <attr name="idleOnBlinkRate" format="integer"/>
+        <attr name="scanOnBlinkRate" format="integer"/>
+        <attr name="pairOnBlinkRate" format="integer"/>
+    </declare-styleable>
+</resources>

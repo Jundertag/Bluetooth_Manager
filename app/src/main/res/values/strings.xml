@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Bluetooth Manager</string>
+    <string name="discover_notification_name">Bluetooth Discovery Notification</string>
+    <string name="discover_notification_description">This is the notification we need to display to you to let us keep an active Bluetooth scanning session, you can hide this if you want.</string>
+    <string name="discover_notification_title">Scanning for bluetooth devices...</string>
+    <string name="menu_bluetooth_home">Home</string>
+</resources>
