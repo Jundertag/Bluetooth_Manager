@@ -1,4 +1,4 @@
-package com.jayden.bluetooth.ui.main
+package com.jayden.bluetooth.ui.elements.main
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
@@ -16,7 +16,6 @@ class MainActivity : AppCompatActivity() {
 
         binding.root.post {
             val cutout = window.decorView.rootWindowInsets.displayCutout?.safeInsetTop ?: 0
-            binding.tabLayout.setPaddingRelative(0, cutout, 0, 0)
         }
     }
 
@@ -25,15 +24,7 @@ class MainActivity : AppCompatActivity() {
 
         binding.pager.adapter = PageAdapter(this)
 
-        val mediator = TabLayoutMediator(binding.tabLayout, binding.pager) { tab, position ->
-            tab.text = when (position) {
-                Page.BluetoothHome.pos -> resources.getString(R.string.menu_bluetooth_home)
 
-                else -> ""
-            }
-        }
-
-        mediator.attach()
 
         binding.imageView.setImageDrawable(applicationContext.getDrawable(R.drawable.ic_launcher_foreground))
     }

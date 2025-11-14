@@ -1,4 +1,4 @@
-package com.jayden.bluetooth.ui.main.fragments
+package com.jayden.bluetooth.ui.elements.main.pages
 
 import android.os.Bundle
 import android.view.LayoutInflater

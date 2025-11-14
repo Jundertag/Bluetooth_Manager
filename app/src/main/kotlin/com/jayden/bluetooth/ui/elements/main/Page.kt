@@ -1,4 +1,4 @@
-package com.jayden.bluetooth.ui.main
+package com.jayden.bluetooth.ui.elements.main
 
 import com.jayden.bluetooth.R
 

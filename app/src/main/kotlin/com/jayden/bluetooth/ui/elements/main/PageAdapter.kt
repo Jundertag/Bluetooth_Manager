@@ -1,9 +1,9 @@
-package com.jayden.bluetooth.ui.main
+package com.jayden.bluetooth.ui.elements.main
 
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.viewpager2.adapter.FragmentStateAdapter
-import com.jayden.bluetooth.ui.main.fragments.*
+import com.jayden.bluetooth.ui.elements.main.pages.BluetoothHomeFragment
 
 class PageAdapter(
     activity: FragmentActivity

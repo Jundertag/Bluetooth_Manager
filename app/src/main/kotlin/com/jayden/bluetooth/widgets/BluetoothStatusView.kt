@@ -9,6 +9,7 @@ import android.util.AttributeSet
 import android.view.View
 import androidx.annotation.ColorInt
 import com.jayden.bluetooth.R
+import kotlinx.parcelize.Parcelize
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -209,113 +210,20 @@ class BluetoothStatusView @JvmOverloads constructor(
     }
 
     @Parcelize
-    private class SavedState : BaseSavedState {
-        var disconnectedColor: Int = 0
-        var connectingColor: Int = 0
-        var connectedColor: Int = 0
-        var disconnectingColor: Int = 0
-        var advertisingColor: Int = 0
-        var inactiveAlpha: Float = 0f
-        var idleOffBlinkRate: Int = 0
-        var scanOffBlinkRate: Int = 0
-        var pairOffBlinkRate: Int = 0
-        var idleOnBlinkRate: Int = 0
-        var scanOnBlinkRate: Int = 0
-        var pairOnBlinkRate: Int = 0
-        var currentStateColor: Int = disconnectedColor
-        var currentColor: Int = currentStateColor
-
-        constructor(superState: Parcelable?) : super(superState)
-        private constructor(parcel: Parcel) : super(parcel) {
-            disconnectedColor = parcel.readInt()
-            connectingColor = parcel.readInt()
-            connectedColor = parcel.readInt()
-            disconnectingColor = parcel.readInt()
-            advertisingColor = parcel.readInt()
-            inactiveAlpha = parcel.readFloat()
-            idleOffBlinkRate = parcel.readInt()
-            scanOffBlinkRate = parcel.readInt()
-            pairOffBlinkRate = parcel.readInt()
-            idleOnBlinkRate = parcel.readInt()
-            scanOnBlinkRate = parcel.readInt()
-            pairOnBlinkRate = parcel.readInt()
-            currentStateColor = parcel.readInt()
-            currentColor = parcel.readInt()
-        }
-
-        override fun writeToParcel(out: Parcel, flags: Int) {
-            super.writeToParcel(out, flags)
-            out.writeInt(disconnectedColor)
-            out.writeInt(connectingColor)
-            out.writeInt(connectedColor)
-            out.writeInt(disconnectingColor)
-            out.writeInt(advertisingColor)
-            out.writeFloat(inactiveAlpha)
-            out.writeInt(idleOffBlinkRate)
-            out.writeInt(scanOffBlinkRate)
-            out.writeInt(pairOffBlinkRate)
-            out.writeInt(idleOnBlinkRate)
-            out.writeInt(scanOnBlinkRate)
-            out.writeInt(pairOnBlinkRate)
-            out.writeInt(currentStateColor)
-            out.writeInt(currentColor)
-        }
-
-        companion object {
-            @JvmField
-            val CREATOR: Parcelable.Creator<SavedState> =
-                object : Parcelable.Creator<SavedState> {
-                    override fun createFromParcel(source: Parcel): SavedState {
-                        return SavedState(source)
-                    }
-
-                    override fun newArray(size: Int): Array<SavedState?> {
-                        return arrayOfNulls(size)
-                    }
-                }
-        }
-    }
-
-    override fun onSaveInstanceState(): Parcelable {
-        val superState = super.onSaveInstanceState()
-        return SavedState(superState).also {
-            it.disconnectedColor = this.disconnectedColor
-            it.connectingColor = this.connectingColor
-            it.connectedColor = this.connectedColor
-            it.disconnectingColor = this.disconnectingColor
-            it.advertisingColor = this.advertisingColor
-            it.inactiveAlpha = this.inactiveAlpha
-            it.idleOffBlinkRate = this.idleOffBlinkRate
-            it.scanOffBlinkRate = this.scanOffBlinkRate
-            it.pairOffBlinkRate = this.pairOffBlinkRate
-            it.idleOnBlinkRate = this.idleOnBlinkRate
-            it.scanOnBlinkRate = this.scanOnBlinkRate
-            it.pairOnBlinkRate = this.pairOnBlinkRate
-            it.currentStateColor = this.currentStateColor
-            it.currentColor = this.currentColor
-        }
-    }
-
-    override fun onRestoreInstanceState(state: Parcelable?) {
-        if (state is SavedState) {
-            super.onRestoreInstanceState(state)
-            disconnectedColor = state.disconnectedColor
-            connectingColor = state.connectingColor
-            connectedColor = state.connectedColor
-            disconnectingColor = state.disconnectingColor
-            advertisingColor = state.advertisingColor
-            inactiveAlpha = state.inactiveAlpha
-            idleOffBlinkRate = state.idleOffBlinkRate
-            scanOffBlinkRate = state.scanOffBlinkRate
-            pairOffBlinkRate = state.pairOffBlinkRate
-            idleOnBlinkRate = state.idleOnBlinkRate
-            scanOnBlinkRate = state.scanOnBlinkRate
-            pairOnBlinkRate = state.pairOnBlinkRate
-            currentStateColor = state.currentStateColor
-            currentColor = state.currentColor
-            startPattern()
-        } else {
-            super.onRestoreInstanceState(state)
-        }
-    }
+    private class SavedState(
+        var disconnectedColor: Int = 0,
+        var connectingColor: Int = 0,
+        var connectedColor: Int = 0,
+        var disconnectingColor: Int = 0,
+        var advertisingColor: Int = 0,
+        var inactiveAlpha: Float = 0f,
+        var idleOffBlinkRate: Int = 0,
+        var scanOffBlinkRate: Int = 0,
+        var pairOffBlinkRate: Int = 0,
+        var idleOnBlinkRate: Int = 0,
+        var scanOnBlinkRate: Int = 0,
+        var pairOnBlinkRate: Int = 0,
+        var currentStateColor: Int = disconnectedColor,
+        var currentColor: Int = currentStateColor,
+    ) : Parcelable
 }

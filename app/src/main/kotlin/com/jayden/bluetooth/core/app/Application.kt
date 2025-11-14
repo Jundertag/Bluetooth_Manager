@@ -1,13 +1,13 @@
 package com.jayden.bluetooth.core.app
 
 import android.app.Application
-import com.jayden.bluetooth.core.AppGraph
+import com.jayden.bluetooth.core.dependency.DependencyResolver
 
 class Application : Application() {
-    lateinit var appGraph: AppGraph
+    lateinit var dependencyResolver: DependencyResolver
 
     override fun onCreate() {
         super.onCreate()
-        appGraph = AppGraph(this)
+        dependencyResolver = DependencyResolver(this.applicationContext)
     }
 }

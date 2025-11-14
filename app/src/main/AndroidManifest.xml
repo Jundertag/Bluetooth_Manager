@@ -2,12 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- legacy perms -->
-    <uses-permission android:name="android.permission.BLUETOOTH"
-        android:maxSdkVersion="30"/>
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"
-        android:maxSdkVersion="30"/>
-
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
         android:minSdkVersion="31"/>
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"
@@ -15,9 +9,21 @@
     <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE"
         android:minSdkVersion="31"/>
 
+    <!-- legacy perms -->
+    <uses-permission android:name="android.permission.BLUETOOTH"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+
+    <uses-feature android:name="android.hardware.bluetooth"
+        android:required="false"/>
+    <uses-feature android:name="android.hardware.bluetooth_le"
+        android:required="false"/>
+
     <!-- optional location perms for more bluetooth info -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+
+    <uses-feature android:name="android.hardware.location.gps"
+        android:required="false"/>
 
     <application
         android:name=".core.app.Application"
@@ -31,7 +37,7 @@
         android:theme="@style/Theme.BluetoothManager">
 
         <activity
-            android:name=".ui.main.MainActivity"
+            android:name=".ui.elements.main.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
