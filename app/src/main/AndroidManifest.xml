@@ -26,7 +26,7 @@
         android:required="false"/>
 
     <application
-        android:name=".core.app.Application"
+        android:name=".MainApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -37,7 +37,7 @@
         android:theme="@style/Theme.BluetoothManager">
 
         <activity
-            android:name=".ui.elements.main.MainActivity"
+            android:name=".main.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
