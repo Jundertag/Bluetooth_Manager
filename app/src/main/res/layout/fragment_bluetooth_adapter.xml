@@ -17,13 +17,17 @@
             android:text="Paired Devices"
             android:textStyle="bold"
             android:textSize="25sp"
-            android:textColor="?attr/colorOnSurface" />
+            android:textColor="?attr/colorOnBackground"
+            android:layout_marginTop="32dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"/>
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="30dp"
             android:padding="6dp"
+            android:color="?attr/colorSurface"
             app:cardCornerRadius="12dp"
             app:layout_constraintTop_toBottomOf="@id/paired_devices_title"
             app:layout_constraintStart_toStartOf="parent"
@@ -31,8 +35,9 @@
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/paired_devices_view"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                tools:listitem="@layout/item_device_view"/>
 
         </com.google.android.material.card.MaterialCardView>
 

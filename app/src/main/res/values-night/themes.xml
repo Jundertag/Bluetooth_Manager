@@ -17,5 +17,6 @@
 
         <!-- Background color. -->
         <item name="android:colorBackground">@color/background_dark</item>
+        <item name="colorOnBackground">@color/on_background_dark</item>
     </style>
 </resources>
