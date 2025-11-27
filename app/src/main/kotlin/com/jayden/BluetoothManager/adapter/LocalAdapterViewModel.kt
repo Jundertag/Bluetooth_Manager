@@ -13,7 +13,6 @@ class LocalAdapterViewModel(
     private val _boundDevices = MutableStateFlow(mutableListOf<DeviceCompat>())
     val boundDevices = _boundDevices.asStateFlow()
     fun start() {
-
     }
 
 

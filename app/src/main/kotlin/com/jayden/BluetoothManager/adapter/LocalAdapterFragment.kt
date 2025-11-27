@@ -39,17 +39,22 @@ class LocalAdapterFragment : Fragment(R.layout.fragment_bluetooth_adapter) {
         adapter = LocalDeviceAdapter()
 
         binding.pairedDevicesView.adapter = adapter
+        binding.localAdapterName.text = "Pixel 9"
     }
 
     override fun onStart() {
         super.onStart()
         viewModel.start()
 
+        /*
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.boundDevices.collect { devices ->
 
             }
         }
+         */
+
+
     }
 
     override fun onDestroyView() {

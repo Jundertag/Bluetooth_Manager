@@ -11,21 +11,34 @@
         android:layout_height="match_parent">
 
         <TextView
+            android:id="@+id/local_adapter_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Local Bluetooth Adapter Name"
+            android:textStyle="bold"
+            android:textSize="24sp"
+            android:textColor="?attr/colorOnBackground"
+            android:layout_marginTop="36dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"/>
+
+        <TextView
             android:id="@+id/paired_devices_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Paired Devices"
             android:textStyle="bold"
-            android:textSize="25sp"
+            android:textSize="20sp"
             android:textColor="?attr/colorOnBackground"
-            android:layout_marginTop="32dp"
-            app:layout_constraintTop_toTopOf="parent"
+            android:layout_marginTop="8dp"
+            android:layout_marginHorizontal="12dp"
+            app:layout_constraintTop_toBottomOf="@id/local_adapter_name"
             app:layout_constraintStart_toStartOf="parent"/>
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="30dp"
+            android:layout_marginHorizontal="12dp"
             android:padding="6dp"
             android:color="?attr/colorSurface"
             app:cardCornerRadius="12dp"
