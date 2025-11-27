@@ -12,15 +12,15 @@ import com.jayden.BluetoothManager.R
 import com.jayden.BluetoothManager.databinding.FragmentBluetoothAdapterBinding
 import kotlinx.coroutines.launch
 
-class LocalAdapterFragment : Fragment() {
+class LocalAdapterFragment : Fragment(R.layout.fragment_bluetooth_adapter) {
     private var _binding: FragmentBluetoothAdapterBinding? = null
     private val binding get() = _binding!!
+
+    private lateinit var adapter: LocalDeviceAdapter
 
     private val viewModel by viewModels<LocalAdapterViewModel> {
         LocalAdapterViewModelFactory((requireActivity().application as MainApplication).applicationGraph)
     }
-
-    private lateinit var adapter: LocalDeviceAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

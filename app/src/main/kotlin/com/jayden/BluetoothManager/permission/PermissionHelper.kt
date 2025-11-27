@@ -1,9 +1,11 @@
 package com.jayden.BluetoothManager.permission
 
+import android.annotation.SuppressLint
 import android.content.Context
 import com.jayden.BluetoothManager.context.ContextUtils
 import com.jayden.BluetoothManager.permission.PermissionHelper.ProtectionLevel.Companion.fromInt
 
+@SuppressLint("StaticFieldLeak")
 object PermissionHelper {
     private val ctx: Context = ContextUtils.getAppContext()
 

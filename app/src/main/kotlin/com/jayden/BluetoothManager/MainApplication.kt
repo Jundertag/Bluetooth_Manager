@@ -9,6 +9,6 @@ class MainApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         applicationGraph = ApplicationGraph(this.applicationContext)
-        ContextUtils.context = this.applicationContext
+        ContextUtils.init(this)
     }
 }

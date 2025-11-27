@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import androidx.annotation.RequiresPermission
 import com.jayden.BluetoothManager.device.DeviceCompat.BondState.Companion.fromInt
 import com.jayden.BluetoothManager.context.ContextUtils
 import com.jayden.BluetoothManager.permission.PermissionHelper
@@ -29,6 +30,7 @@ class DeviceCompat(
      * @throws SecurityException if the app doesn't have [Manifest.permission.BLUETOOTH_CONNECT] permission
      */
     val alias: String?
+        @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
         get() {
             return if (PermissionHelper.isGrantedPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
                 device.alias
@@ -42,7 +44,8 @@ class DeviceCompat(
      *
      * @throws SecurityException if the app doesn't have [Manifest.permission.BLUETOOTH_CONNECT] permission
      */
-    val name: String get() {
+    val name: String @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    get() {
         if (PermissionHelper.isGrantedPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
             return device.name
         } else {
@@ -58,8 +61,10 @@ class DeviceCompat(
      *
      * @throws SecurityException if the app is not given [Manifest.permission.BLUETOOTH_CONNECT] permission
      */
+    @RequiresPermission(android.Manifest.permission.BLUETOOTH_CONNECT)
     suspend fun waitForBondState(state: BondState, timeoutMs: Long = 30_000L) {
         if (PermissionHelper.isGrantedPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
+
             withTimeoutOrNull(timeoutMs) {
                 if (device.bondState.fromInt() == state) {
                     return@withTimeoutOrNull
@@ -94,12 +99,6 @@ class DeviceCompat(
         } else {
             throw SecurityException()
         }
-    }
-
-    fun format(): DeviceCompatUi {
-        return DeviceCompatUi(
-
-        )
     }
 
     enum class BondState(val num: Int) {
