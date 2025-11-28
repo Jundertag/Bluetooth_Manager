@@ -1,19 +1,15 @@
 package com.jayden.BluetoothManager.adapter
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
+import android.util.Log
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.jayden.BluetoothManager.R
 import com.jayden.BluetoothManager.databinding.ItemDeviceViewBinding
 import com.jayden.BluetoothManager.device.DeviceCompatUi
 
 class LocalDeviceAdapter : ListAdapter<DeviceCompatUi, LocalDeviceAdapter.ViewHolder>(DiffCallback) {
-
-    private val items = mutableListOf<DeviceCompatUi>()
 
 
     override fun onCreateViewHolder(
@@ -29,27 +25,10 @@ class LocalDeviceAdapter : ListAdapter<DeviceCompatUi, LocalDeviceAdapter.ViewHo
         holder: ViewHolder,
         position: Int
     ) {
-        holder.bind(items[position])
+        holder.bind(getItem(position))
     }
 
-    override fun getItemCount(): Int {
-        return items.size
-    }
-
-    fun addOrUpdateDevice(device: DeviceCompatUi) {
-        val newList = currentList.toMutableList()
-
-        val index = newList.indexOfFirst { it.address == device.address }
-        if (index == -1) {
-            newList.add(device)
-        } else {
-            newList[index] = device
-        }
-
-        submitList(newList)
-    }
-
-    inner class ViewHolder(
+    class ViewHolder(
         private val binding: ItemDeviceViewBinding
     ) : RecyclerView.ViewHolder(binding.root) {
         fun bind(item: DeviceCompatUi) {
@@ -63,6 +42,7 @@ class LocalDeviceAdapter : ListAdapter<DeviceCompatUi, LocalDeviceAdapter.ViewHo
             oldItem: DeviceCompatUi,
             newItem: DeviceCompatUi
         ): Boolean {
+            Log.d(TAG, "DiffCallback::areItemsTheSame($oldItem, $newItem): ${oldItem.address == newItem.address}")
             return oldItem.address == newItem.address
         }
 
@@ -73,5 +53,9 @@ class LocalDeviceAdapter : ListAdapter<DeviceCompatUi, LocalDeviceAdapter.ViewHo
             return oldItem == newItem
         }
 
+    }
+
+    companion object {
+        private const val TAG = "LocalDeviceAdapter"
     }
 }

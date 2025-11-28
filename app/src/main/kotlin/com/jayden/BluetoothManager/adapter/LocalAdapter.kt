@@ -4,6 +4,7 @@ import android.Manifest
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.pm.PackageManager
+import androidx.annotation.RequiresPermission
 import com.jayden.BluetoothManager.adapter.LocalAdapter.State.Companion.fromInt
 import com.jayden.BluetoothManager.adapter.exception.AdapterNotOnException
 import com.jayden.BluetoothManager.device.DeviceCompat
@@ -30,10 +31,11 @@ class LocalAdapter(
      */
     val pairedDevices: MutableSet<DeviceCompat>
         get() {
-            if (ctx.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
+            if (PermissionHelper.isGrantedPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
                 val result = mutableSetOf<DeviceCompat>()
-                for (device in adapter.bondedDevices.iterator()) {
-                    result.add(DeviceCompat(device))
+                adapter.bondedDevices.forEach { device ->
+                    val deviceCompat = DeviceCompat(device)
+                    result.add(deviceCompat)
                 }
                 return result
             }
@@ -47,7 +49,8 @@ class LocalAdapter(
      *
      * @throws SecurityException if app doesn't have [Manifest.permission.BLUETOOTH_SCAN] permission
      */
-    val discovering: Boolean get() {
+    val discovering: Boolean @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
+    get() {
         if (PermissionHelper.isGrantedPermission(Manifest.permission.BLUETOOTH_SCAN)) {
             return adapter.isDiscovering
         }
@@ -57,32 +60,20 @@ class LocalAdapter(
     }
 
     /**
-     * Get the adapter's friendly name by referencing
-     *
-     * Set the adapter's name
+     * Get the adapter's friendly name. If any errors occur, simply returns an empty string
      *
      * @throws AdapterNotOnException if adapter is off
-     * @throws SecurityException if app doesn't have [Manifest.permission.BLUETOOTH_CONNECT] permission
      */
-    var name: String
+
+    val name: String
         get() {
-            if (ctx.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
-                return adapter.name ?: throw AdapterNotOnException()
-            }
-            else {
-                throw SecurityException()
-            }
-        }
-        set(value) {
-            if (ctx.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
-                if (!adapter.setName(value)) {
-                    throw AdapterNotOnException()
-                }
-            }
-            else {
-                throw SecurityException()
+            return if (PermissionHelper.isGrantedPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
+                adapter.name ?: ""
+            } else {
+                ""
             }
         }
+
 
     enum class State(val num: Int) {
         STATE_OFF(10),

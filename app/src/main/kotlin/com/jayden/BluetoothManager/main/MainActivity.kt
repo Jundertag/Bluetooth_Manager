@@ -1,9 +1,12 @@
 package com.jayden.BluetoothManager.main
 
+import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ShareCompat.IntentBuilder
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.fragment.app.commitNow
@@ -11,6 +14,7 @@ import com.jayden.BluetoothManager.MainApplication
 import com.jayden.BluetoothManager.R
 import com.jayden.BluetoothManager.adapter.LocalAdapterFragment
 import com.jayden.BluetoothManager.databinding.ActivityMainBinding
+import com.jayden.BluetoothManager.settings.SettingsActivity
 
 class MainActivity : AppCompatActivity() {
     private var _binding: ActivityMainBinding? = null
@@ -42,7 +46,16 @@ class MainActivity : AppCompatActivity() {
 
         binding.bottomNavigation.setOnItemSelectedListener { item ->
             Log.d(TAG, "clicked on menu id ${item.itemId}")
+            if (item.itemId == R.id.menu_settings) {
+                startActivity(Intent(Intent.ACTION_APPLICATION_PREFERENCES).apply {
+                    setClass(applicationContext, SettingsActivity::class.java)
+                })
+            }
             true
+        }
+
+        binding.bottomNavigation.setOnItemReselectedListener { item ->
+            Log.v(TAG, "clicked on already selected item")
         }
     }
 

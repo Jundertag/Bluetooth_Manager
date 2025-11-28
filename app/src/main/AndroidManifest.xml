@@ -46,6 +46,13 @@
             </intent-filter>
         </activity>
 
-    </application>
+        <activity
+            android:name=".settings.SettingsActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.APPLICATION_PREFERENCES"/>
+            </intent-filter>
+        </activity>
 
+    </application>
 </manifest>
