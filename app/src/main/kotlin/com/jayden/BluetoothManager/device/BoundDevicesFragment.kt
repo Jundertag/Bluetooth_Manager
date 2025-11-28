@@ -9,7 +9,6 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.jayden.BluetoothManager.MainApplication
 import com.jayden.BluetoothManager.R
 import com.jayden.BluetoothManager.adapter.LocalDeviceAdapter
 import com.jayden.BluetoothManager.adapter.LocalAdapterViewModel
@@ -26,18 +25,20 @@ class BoundDevicesFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentPairedDevicesBinding.inflate(inflater, container, false)
+        Log.v(TAG, "onCreateView(\ninflater: LayoutInflater = $inflater, \ncontainer: ViewGroup? = $container, \nsavedInstanceState: Bundle? = $savedInstanceState\n): View = ${binding.root}")
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        Log.v(TAG, "onViewCreated(view: View = $view, \nsavedInstanceState: Bundle? = $savedInstanceState\n)")
         adapter = LocalDeviceAdapter()
 
         binding.pairedDevicesView.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = this@BoundDevicesFragment.adapter
+        }.also {
+            Log.v(TAG, "pairedDevicesView.layoutManager = ${it.layoutManager}\npairedDevicesView.adapter = ${it.adapter}")
         }
-
-        viewModel.start()
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.boundDevices.collect { devices ->
@@ -49,12 +50,16 @@ class BoundDevicesFragment : Fragment() {
                     )
                     deviceCompatUi.add(compatUi)
                 }
-                adapter.submitList(deviceCompatUi)
+                Log.v(TAG, "current devices: \n$deviceCompatUi")
+                adapter.submitList(deviceCompatUi) {
+                    Log.v(TAG, "submitted list successfully")
+                }
             }
         }
     }
 
     override fun onDestroyView() {
+        Log.i(TAG, "onDestroyView()")
         _binding = null
         super.onDestroyView()
     }

@@ -1,16 +1,23 @@
 package com.jayden.BluetoothManager.adapter
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import com.jayden.BluetoothManager.R
 import com.jayden.BluetoothManager.databinding.FragmentAdapterStateBinding
+import com.jayden.BluetoothManager.device.BoundDevicesFragment
+import kotlinx.coroutines.launch
 
 class AdapterStateFragment : Fragment() {
     private var _binding: FragmentAdapterStateBinding? = null
     private val binding get() = _binding!!
+
+    private val viewModel by viewModels<LocalAdapterViewModel>(ownerProducer = { requireParentFragment() })
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -18,16 +25,27 @@ class AdapterStateFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentAdapterStateBinding.inflate(inflater, container, false)
+        Log.v(TAG, "onCreateView(\ninflater = $inflater, \ncontainer = $container, \nsavedInstanceState:  = $savedInstanceState\n) = ${binding.root}")
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        binding.localAdapterName.text = "Local Adapter Name"
+        Log.v(TAG, "onViewCreated(\nview = $view, \nsavedInstanceState = $savedInstanceState\n)")
 
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.adapterName.collect { adapterName ->
+                binding.localAdapterName.text = adapterName
+            }
+        }
     }
 
     override fun onDestroyView() {
+        Log.i(TAG, "onDestroyView()")
         _binding = null
         super.onDestroyView()
+    }
+
+    companion object {
+        private const val TAG = "AdapterStateFragment"
     }
 }

@@ -12,7 +12,7 @@ import com.jayden.BluetoothManager.context.ContextUtils
 import com.jayden.BluetoothManager.permission.PermissionHelper
 
 class LocalAdapter(
-    private val manager: BluetoothManager
+    manager: BluetoothManager
 ) {
     private val adapter = manager.adapter
 
@@ -64,7 +64,6 @@ class LocalAdapter(
      *
      * @throws AdapterNotOnException if adapter is off
      */
-
     val name: String
         get() {
             return if (PermissionHelper.isGrantedPermission(Manifest.permission.BLUETOOTH_CONNECT)) {

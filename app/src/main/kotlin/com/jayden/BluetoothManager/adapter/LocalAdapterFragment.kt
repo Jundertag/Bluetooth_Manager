@@ -57,14 +57,17 @@ class LocalAdapterFragment : Fragment(R.layout.fragment_bluetooth_adapter) {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentBluetoothAdapterBinding.inflate(inflater, container, false)
+        Log.v(TAG, "onCreateView(\ninflater: LayoutInflater = $inflater, \ncontainer: ViewGroup? = $container, \nsavedInstanceState: Bundle? = $savedInstanceState\n): View = ${binding.root}")
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        Log.v(TAG, "onViewCreated(\nview: View = $view, \nsavedInstanceState: Bundle? = $savedInstanceState\n)")
         binding.tabLayout.apply {
             addTab(newTab().setText("Adapter").setTag(ADAPTER_STATE))
             addTab(newTab().setText("Paired Devices").setTag(PAIRED_DEVICES))
             addTab(newTab().setText("Scan").setTag(SCAN_FRAGMENT))
+            Log.v(TAG, "added tabs")
         }.also {
             childFragmentManager.beginTransaction().apply {
                 for (fragment in fragments) {
@@ -72,8 +75,10 @@ class LocalAdapterFragment : Fragment(R.layout.fragment_bluetooth_adapter) {
                     detach(fragment.value)
                 }
                 attach(fragments[ADAPTER_STATE]!!)
+                Log.i(TAG, "adding and detaching all but fragments[ADAPTER_STATE] fragment")
                 commitNow()
             }
+            Log.v(TAG, "committed")
         }
 
         binding.tabLayout.addOnTabSelectedListener(tabSelectedListener)
@@ -81,6 +86,7 @@ class LocalAdapterFragment : Fragment(R.layout.fragment_bluetooth_adapter) {
     }
 
     override fun onDestroyView() {
+        Log.i(TAG, "onDestroyView()")
         _binding = null
         super.onDestroyView()
     }
