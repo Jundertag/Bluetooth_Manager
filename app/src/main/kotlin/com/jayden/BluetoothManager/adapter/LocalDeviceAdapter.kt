@@ -34,6 +34,7 @@ class LocalDeviceAdapter : ListAdapter<DeviceCompatUi, LocalDeviceAdapter.ViewHo
         fun bind(item: DeviceCompatUi) {
             binding.deviceAddress.text = item.address
             binding.deviceTitle.text = item.name
+            binding.deviceRssi.text = item.rssi
         }
     }
 

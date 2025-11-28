@@ -53,6 +53,8 @@ class DeviceCompat(
         }
     }
 
+    var rssi: Int? = null
+
     /**
      * Suspends until the desired [state] is reached
      *
@@ -61,10 +63,9 @@ class DeviceCompat(
      *
      * @throws SecurityException if the app is not given [Manifest.permission.BLUETOOTH_CONNECT] permission
      */
-    @RequiresPermission(android.Manifest.permission.BLUETOOTH_CONNECT)
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     suspend fun waitForBondState(state: BondState, timeoutMs: Long = 30_000L) {
         if (PermissionHelper.isGrantedPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
-
             withTimeoutOrNull(timeoutMs) {
                 if (device.bondState.fromInt() == state) {
                     return@withTimeoutOrNull

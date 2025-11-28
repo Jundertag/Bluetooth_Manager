@@ -1,8 +1,11 @@
 package com.jayden.BluetoothManager.adapter
 
 import android.Manifest
+import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.annotation.RequiresPermission
 import com.jayden.BluetoothManager.adapter.LocalAdapter.State.Companion.fromInt
@@ -10,6 +13,9 @@ import com.jayden.BluetoothManager.adapter.exception.AdapterNotOnException
 import com.jayden.BluetoothManager.device.DeviceCompat
 import com.jayden.BluetoothManager.context.ContextUtils
 import com.jayden.BluetoothManager.permission.PermissionHelper
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 class LocalAdapter(
     manager: BluetoothManager
@@ -29,7 +35,7 @@ class LocalAdapter(
      *
      * @throws SecurityException if device doesn't have [Manifest.permission.BLUETOOTH_CONNECT] permission
      */
-    val pairedDevices: MutableSet<DeviceCompat>
+    val pairedDevices: MutableSet<DeviceCompat> @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
         get() {
             if (PermissionHelper.isGrantedPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
                 val result = mutableSetOf<DeviceCompat>()
@@ -73,6 +79,43 @@ class LocalAdapter(
             }
         }
 
+    @RequiresPermission(allOf = [Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.ACCESS_FINE_LOCATION])
+    private val _discoveredDevices: MutableStateFlow<MutableList<DeviceCompat>> = MutableStateFlow(mutableListOf())
+    val discoveredDevices = _discoveredDevices.asStateFlow()
+
+    private val discoveryReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == BluetoothDevice.ACTION_FOUND) {
+                val device: BluetoothDevice? =
+                    intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
+
+                val rssi: Int = intent.getIntExtra(BluetoothDevice.EXTRA_RSSI, BluetoothDevice.ERROR)
+
+                if (device != null) {
+                    val compat = DeviceCompat(device).also {
+                        it.rssi = rssi
+                    }
+
+                    _discoveredDevices.update {
+                        it.add(compat)
+                        it
+                    }
+                }
+            }
+        }
+    }
+
+    @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
+    fun startDiscovery() {
+        adapter.cancelDiscovery()
+        adapter.startDiscovery()
+
+
+    }
+
+    fun stopDiscovery() {
+        adapter.cancelDiscovery()
+    }
 
     enum class State(val num: Int) {
         STATE_OFF(10),
