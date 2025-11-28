@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.jayden.BluetoothManager.MainApplication
 import com.jayden.BluetoothManager.R
 import com.jayden.BluetoothManager.adapter.LocalDeviceAdapter
+import com.jayden.BluetoothManager.adapter.LocalAdapterViewModel
 import com.jayden.BluetoothManager.databinding.FragmentPairedDevicesBinding
 import kotlinx.coroutines.launch
 
@@ -21,9 +22,7 @@ class BoundDevicesFragment : Fragment() {
 
     private lateinit var adapter: LocalDeviceAdapter
 
-    private val viewModel by viewModels<BoundDevicesViewModel> {
-        BoundDevicesViewModelFactory((requireActivity().application as MainApplication).applicationGraph)
-    }
+    private val viewModel by viewModels<LocalAdapterViewModel>(ownerProducer = { requireParentFragment() })
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentPairedDevicesBinding.inflate(inflater, container, false)
@@ -33,9 +32,10 @@ class BoundDevicesFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         adapter = LocalDeviceAdapter()
 
-        binding.pairedDevicesView.layoutManager = LinearLayoutManager(requireContext())
-
-        binding.pairedDevicesView.adapter = adapter
+        binding.pairedDevicesView.apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = this@BoundDevicesFragment.adapter
+        }
 
         viewModel.start()
 
@@ -49,10 +49,7 @@ class BoundDevicesFragment : Fragment() {
                     )
                     deviceCompatUi.add(compatUi)
                 }
-                Log.v(TAG, "$deviceCompatUi")
-                adapter.submitList(deviceCompatUi) {
-                    Log.d(TAG, "Submitted Successfully")
-                }
+                adapter.submitList(deviceCompatUi)
             }
         }
     }
