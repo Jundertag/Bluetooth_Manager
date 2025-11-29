@@ -1,8 +1,10 @@
 package com.jayden.BluetoothManager.adapter
 
+import android.Manifest
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.jayden.BluetoothManager.device.DeviceCompat
+import com.jayden.BluetoothManager.permission.PermissionHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -12,6 +14,10 @@ class LocalAdapterViewModel(
 ) : ViewModel() {
     private val _boundDevices = MutableStateFlow(mutableListOf<DeviceCompat>())
     val boundDevices = _boundDevices.asStateFlow()
+
+    init {
+        Log.v(TAG, "init")
+    }
 
     private val _adapterName = MutableStateFlow("")
     val adapterName = _adapterName.asStateFlow()
@@ -25,6 +31,16 @@ class LocalAdapterViewModel(
             } catch (e: SecurityException) {
                 "<no-bluetooth-connect-perms>"
             }
+        }
+    }
+
+    fun startDiscovery(): Boolean {
+        if (PermissionHelper.isGrantedPermission(Manifest.permission.BLUETOOTH_SCAN)) {
+            @Suppress("MissingPermission")
+            adapter.startDiscovery()
+            return true
+        } else {
+            return false
         }
     }
 

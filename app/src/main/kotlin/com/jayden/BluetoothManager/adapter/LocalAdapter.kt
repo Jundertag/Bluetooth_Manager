@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import androidx.annotation.RequiresPermission
 import com.jayden.BluetoothManager.adapter.LocalAdapter.State.Companion.fromInt
@@ -70,7 +71,7 @@ class LocalAdapter(
      *
      * @throws AdapterNotOnException if adapter is off
      */
-    val name: String
+    val name: String @Suppress("MissingPermission")
         get() {
             return if (PermissionHelper.isGrantedPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
                 adapter.name ?: ""
@@ -79,8 +80,10 @@ class LocalAdapter(
             }
         }
 
-    @RequiresPermission(allOf = [Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.ACCESS_FINE_LOCATION])
+    private var discoveryReceiverRegistered: Boolean = false
+
     private val _discoveredDevices: MutableStateFlow<MutableList<DeviceCompat>> = MutableStateFlow(mutableListOf())
+    @RequiresPermission(allOf = [Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.ACCESS_FINE_LOCATION])
     val discoveredDevices = _discoveredDevices.asStateFlow()
 
     private val discoveryReceiver = object : BroadcastReceiver() {
@@ -110,11 +113,18 @@ class LocalAdapter(
         adapter.cancelDiscovery()
         adapter.startDiscovery()
 
-
+        val intentFilter = IntentFilter().apply {
+            addAction(BluetoothDevice.ACTION_FOUND)
+        }
+        if (!discoveryReceiverRegistered)
+            ctx.registerReceiver(discoveryReceiver, intentFilter)
     }
 
+    @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
     fun stopDiscovery() {
         adapter.cancelDiscovery()
+        if (discoveryReceiverRegistered)
+            ctx.unregisterReceiver(discoveryReceiver)
     }
 
     enum class State(val num: Int) {

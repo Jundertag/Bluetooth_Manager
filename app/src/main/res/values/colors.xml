@@ -21,12 +21,12 @@
     <color name="background_light">#FFFFFF</color>
     <color name="background_dark">#000000</color>
 
-    <color name="on_background_light">#1D1D1D</color>
+    <color name="on_background_light">#303030</color>
     <color name="on_background_dark">#C8C8C8</color>
 
-    <color name="surface_light">#F0F0F0</color>
-    <color name="surface_dark">#0F0F0F</color>
+    <color name="surface_light">#DCDCDC</color>
+    <color name="surface_dark">#232323</color>
 
-    <color name="on_surface_light">#1D1D1D</color>
+    <color name="on_surface_light">#353535</color>
     <color name="on_surface_dark">#C8C8C8</color>
 </resources>

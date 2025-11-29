@@ -25,12 +25,12 @@ class BoundDevicesFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentPairedDevicesBinding.inflate(inflater, container, false)
-        Log.v(TAG, "onCreateView(\ninflater: LayoutInflater = $inflater, \ncontainer: ViewGroup? = $container, \nsavedInstanceState: Bundle? = $savedInstanceState\n): View = ${binding.root}")
+        Log.v(TAG, "onCreateView(\n    inflater = $inflater, \n    container = $container, \n    savedInstanceState = $savedInstanceState\n): View = ${binding.root}")
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        Log.v(TAG, "onViewCreated(view: View = $view, \nsavedInstanceState: Bundle? = $savedInstanceState\n)")
+        Log.v(TAG, "onViewCreated(\n    view = $view, \n    savedInstanceState = $savedInstanceState\n)")
         adapter = LocalDeviceAdapter()
 
         binding.pairedDevicesView.apply {

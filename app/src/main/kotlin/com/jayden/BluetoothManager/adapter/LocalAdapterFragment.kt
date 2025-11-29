@@ -9,6 +9,7 @@ import androidx.fragment.app.viewModels
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commit
+import androidx.fragment.app.commitNow
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.tabs.TabLayout
@@ -26,22 +27,25 @@ class LocalAdapterFragment : Fragment(R.layout.fragment_bluetooth_adapter) {
 
     private val fragments = mapOf(ADAPTER_STATE to AdapterStateFragment(), PAIRED_DEVICES to BoundDevicesFragment(), SCAN_FRAGMENT to BluetoothScannerFragment())
 
-    private val viewModel by viewModels<LocalAdapterViewModel> {
-        LocalAdapterViewModelFactory((requireActivity().application as MainApplication).applicationGraph)
-    }
+    private val viewModel by viewModels<LocalAdapterViewModel>(
+        ownerProducer = { this },
+        factoryProducer = { LocalAdapterViewModelFactory((requireActivity().application as MainApplication).applicationGraph) }
+    )
 
     private val tabSelectedListener = object : TabLayout.OnTabSelectedListener {
         override fun onTabSelected(tab: TabLayout.Tab?) {
             Log.d(TAG, "TabLayout.OnTabSelectedListener::onTabSelected(${tab?.text})")
-            childFragmentManager.commit {
-                attach(fragments[tab?.tag]!!)
+            childFragmentManager.commitNow {
+                if (fragments[tab?.tag] != null) {
+                    show(fragments[tab?.tag]!!)
+                }
             }
         }
 
         override fun onTabUnselected(tab: TabLayout.Tab?) {
-            Log.d(TAG, "TabLayout.OnTabSelectedListener::onTabUnelected(${tab?.text})")
-            childFragmentManager.commit {
-                detach(fragments[tab?.tag]!!)
+            Log.d(TAG, "TabLayout.OnTabSelectedListener::onTabUnselected(${tab?.text})")
+            childFragmentManager.commitNow {
+                for (fragment in fragments) hide(fragment.value)
             }
         }
 
@@ -57,36 +61,48 @@ class LocalAdapterFragment : Fragment(R.layout.fragment_bluetooth_adapter) {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentBluetoothAdapterBinding.inflate(inflater, container, false)
-        Log.v(TAG, "onCreateView(\ninflater: LayoutInflater = $inflater, \ncontainer: ViewGroup? = $container, \nsavedInstanceState: Bundle? = $savedInstanceState\n): View = ${binding.root}")
+        Log.v(TAG, "onCreateView(\n    inflater = $inflater, \n    container = $container, \n    savedInstanceState = $savedInstanceState\n): View = ${binding.root}")
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        Log.v(TAG, "onViewCreated(\nview: View = $view, \nsavedInstanceState: Bundle? = $savedInstanceState\n)")
+        Log.v(TAG, "onViewCreated(\n    view = $view, \n    savedInstanceState = $savedInstanceState\n)")
+
+        binding.tabLayout.addOnTabSelectedListener(tabSelectedListener)
+
         binding.tabLayout.apply {
             addTab(newTab().setText("Adapter").setTag(ADAPTER_STATE))
             addTab(newTab().setText("Paired Devices").setTag(PAIRED_DEVICES))
             addTab(newTab().setText("Scan").setTag(SCAN_FRAGMENT))
-            Log.v(TAG, "added tabs")
-        }.also {
+            Log.v(TAG, "addTab(newTab().setText(\"...\").setTag(CONST)) * 3")
+        }
+
+        if (savedInstanceState == null) {
+            Log.d(TAG, "onViewCreated\$savedInstanceState = null")
             childFragmentManager.beginTransaction().apply {
                 for (fragment in fragments) {
                     add(R.id.fragment_container, fragment.value, fragment.key)
-                    detach(fragment.value)
+                    hide(fragment.value)
                 }
-                attach(fragments[ADAPTER_STATE]!!)
-                Log.i(TAG, "adding and detaching all but fragments[ADAPTER_STATE] fragment")
                 commitNow()
             }
-            Log.v(TAG, "committed")
+
+            Log.v(TAG, "detached all but the default selected fragment")
+        } else {
+            Log.d(TAG, "savedInstanceState != null")
         }
 
-        binding.tabLayout.addOnTabSelectedListener(tabSelectedListener)
+        viewModel.start()
+    }
 
+    override fun onStart() {
+        Log.d(TAG, "onStart()")
+        super.onStart()
     }
 
     override fun onDestroyView() {
         Log.i(TAG, "onDestroyView()")
+        binding.tabLayout.removeOnTabSelectedListener(tabSelectedListener)
         _binding = null
         super.onDestroyView()
     }

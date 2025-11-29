@@ -13,6 +13,14 @@ object PermissionHelper {
         return ctx.checkSelfPermission(permission) == GrantState.GRANTED.num
     }
 
+    fun isGrantedPermissions(permissions: Array<String>): Boolean {
+        val results = mutableMapOf<String, Boolean>()
+        for (perm in permissions) {
+            results[perm] = ctx.checkSelfPermission(perm) == GrantState.GRANTED.num
+        }
+        return !results.values.contains(false)
+    }
+
     fun getPermProtection(permission: String): ProtectionLevel {
         return ctx.packageManager.getPermissionInfo(permission, 0).protection.fromInt()
     }

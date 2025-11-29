@@ -1,16 +1,13 @@
 package com.jayden.BluetoothManager.main
 
-import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ShareCompat.IntentBuilder
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.commit
 import androidx.fragment.app.commitNow
-import com.jayden.BluetoothManager.MainApplication
 import com.jayden.BluetoothManager.R
 import com.jayden.BluetoothManager.adapter.LocalAdapterFragment
 import com.jayden.BluetoothManager.databinding.ActivityMainBinding
@@ -24,6 +21,7 @@ class MainActivity : AppCompatActivity() {
     private val fragments: Map<String, Fragment> = mapOf(LOCAL_ADAPTER_FRAGMENT to LocalAdapterFragment())
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Log.v(TAG, "onCreate(savedInstanceState = $savedInstanceState)")
         super.onCreate(savedInstanceState)
         _binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -32,20 +30,64 @@ class MainActivity : AppCompatActivity() {
             cutout = window.decorView.rootWindowInsets.displayCutout?.safeInsetTop ?: 0
         }
 
-        supportFragmentManager.commitNow {
-            for (fragment in fragments) {
-                add(fragment.value, fragment.key)
-                detach(fragment.value)
+        val nightMode = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK)
+        when (nightMode) {
+            Configuration.UI_MODE_NIGHT_YES -> {
+                setNightMode(mode = true, recreate = false)
             }
-            attach(fragments[LOCAL_ADAPTER_FRAGMENT]!!)
+
+            Configuration.UI_MODE_NIGHT_NO -> {
+                setNightMode(mode = false, recreate = false)
+            }
+
+            else -> {
+                setNightMode(mode = false, recreate = false)
+            }
+        }
+
+
+        if (savedInstanceState == null) {
+            Log.d(TAG, "created from cold state")
+            supportFragmentManager.commitNow {
+                for (fragment in fragments) {
+                    add(R.id.fragment_container, fragment.value, fragment.key)
+                    detach(fragment.value)
+                }
+                attach(fragments[LOCAL_ADAPTER_FRAGMENT]!!)
+            }
+        } else {
+            Log.d(TAG, "created from warm state")
         }
     }
 
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        Log.v(TAG, "onConfigurationChanged(newConfig = $newConfig)")
+        val nightMode = (newConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK)
+
+        when (nightMode) {
+            Configuration.UI_MODE_NIGHT_YES -> {
+                Log.d(TAG, "onConfigurationChanged\$nightMode = true")
+                setNightMode(mode = true, recreate = true)
+            }
+            Configuration.UI_MODE_NIGHT_NO -> {
+                Log.d(TAG, "onConfigurationChanged\$nightMode = false")
+                setNightMode(mode = false, recreate = true)
+            }
+            else -> {
+                Log.w(TAG, "onConfigurationChanged\$nightMode = UNDEFINED")
+                setNightMode(mode = true, recreate = true)
+            }
+        }
+
+        super.onConfigurationChanged(newConfig)
+    }
+
     override fun onStart() {
+        Log.v(TAG, "onStart()")
         super.onStart()
 
         binding.bottomNavigation.setOnItemSelectedListener { item ->
-            Log.d(TAG, "clicked on menu id ${item.itemId}")
+            Log.d(TAG, "clicked on ${item.title} menu")
             if (item.itemId == R.id.menu_settings) {
                 startActivity(Intent(Intent.ACTION_APPLICATION_PREFERENCES).apply {
                     setClass(applicationContext, SettingsActivity::class.java)
@@ -54,14 +96,31 @@ class MainActivity : AppCompatActivity() {
             true
         }
 
+
+
         binding.bottomNavigation.setOnItemReselectedListener { item ->
-            Log.v(TAG, "clicked on already selected item")
+            Log.v(TAG, "clicked on already selected item ${item.title}")
         }
     }
 
+    override fun onStop() {
+        Log.v(TAG, "onStop()")
+        super.onStop()
+    }
+
     override fun onDestroy() {
+        Log.w(TAG, "onDestroy()")
         _binding = null
         super.onDestroy()
+    }
+
+    private fun setNightMode(mode: Boolean, recreate: Boolean) {
+        Log.i(TAG, "setNightMode(mode = $mode, recreate = $recreate)")
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            isAppearanceLightStatusBars = !mode
+            isAppearanceLightNavigationBars = !mode
+        }
+        if (recreate) recreate()
     }
 
     companion object {

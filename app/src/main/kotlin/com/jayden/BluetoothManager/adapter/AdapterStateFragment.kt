@@ -25,12 +25,12 @@ class AdapterStateFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentAdapterStateBinding.inflate(inflater, container, false)
-        Log.v(TAG, "onCreateView(\ninflater = $inflater, \ncontainer = $container, \nsavedInstanceState:  = $savedInstanceState\n) = ${binding.root}")
+        Log.v(TAG, "onCreateView(\n    inflater = $inflater, \n    container = $container, \n    savedInstanceState = $savedInstanceState\n): View = ${binding.root}")
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        Log.v(TAG, "onViewCreated(\nview = $view, \nsavedInstanceState = $savedInstanceState\n)")
+        Log.v(TAG, "onViewCreated(\n    view = $view, \n    savedInstanceState = $savedInstanceState\n)")
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.adapterName.collect { adapterName ->
