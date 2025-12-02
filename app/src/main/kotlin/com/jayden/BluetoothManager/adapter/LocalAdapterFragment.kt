@@ -1,10 +1,15 @@
 package com.jayden.BluetoothManager.adapter
 
+import android.Manifest
+import android.app.Activity
+import android.bluetooth.BluetoothAdapter
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.viewModels
 import androidx.fragment.app.Fragment
@@ -17,6 +22,7 @@ import com.google.android.material.tabs.TabLayout
 import com.jayden.BluetoothManager.MainApplication
 import com.jayden.BluetoothManager.R
 import com.jayden.BluetoothManager.adapter.exception.AdapterNotOnException
+import com.jayden.BluetoothManager.adapter.exception.PermissionException
 import com.jayden.BluetoothManager.databinding.FragmentBluetoothAdapterBinding
 import com.jayden.BluetoothManager.device.BoundDevicesFragment
 import com.jayden.BluetoothManager.device.DeviceCompatUi
@@ -98,10 +104,40 @@ class LocalAdapterFragment : Fragment(R.layout.fragment_bluetooth_adapter) {
         try {
             viewModel.start()
         } catch (e: AdapterNotOnException) {
-            // TODO: ask to turn on adapter
-            val launcher = activity.registerForActivityResult(
+            Log.w(TAG, "Adapter is not on", e)
+            val launcher = requireActivity().registerForActivityResult(
                 ActivityResultContracts.StartActivityForResult()
-            )
+            ) { result ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    viewModel.start()
+                }
+            }
+
+            if (PermissionHelper.isGrantedPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
+                launcher.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+            } else {
+                lifecycleScope.launch {
+                    val permissionResults = PermissionHelper.requestPermissions(requireActivity(), arrayOf(
+                        Manifest.permission.BLUETOOTH_CONNECT,
+                        Manifest.permission.BLUETOOTH_SCAN,
+                        Manifest.permission.BLUETOOTH_ADVERTISE
+                        )
+                    )
+
+                    // loop through granted perms
+                    for (result in permissionResults) {
+                        if (result.value) {
+                            Log.i(TAG, "permission: ${result.key}, has been granted.")
+                        } else {
+                            Log.i(TAG, "permission: ${result.key}, has not been granted.")
+                            if (result.key == Manifest.permission.BLUETOOTH_CONNECT) {
+                                Log.w(TAG, "permission needed has not been granted")
+                                Toast.makeText(context, "Permission BLUETOOTH_CONNECT has not been granted", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
