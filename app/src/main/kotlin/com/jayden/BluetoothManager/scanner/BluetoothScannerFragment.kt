@@ -33,6 +33,32 @@ class BluetoothScannerFragment : Fragment() {
         Log.v(TAG, "onViewCreated(\n    view = $view, \n    savedInstanceState = $savedInstanceState\n)")
     }
 
+    override fun onStart() {
+        Log.d(TAG, "onStart()")
+        super.onStart()
+    }
+
+    override fun onResume() {
+        Log.v(TAG, "onResume()")
+        super.onResume()
+    }
+
+    override fun onPause() {
+        Log.v(TAG, "onPause()")
+        super.onPause()
+    }
+
+    override fun onStop() {
+        Log.v(TAG, "onStop()")
+        super.onStop()
+    }
+
+    override fun onDestroyView() {
+        Log.w(TAG, "onDestroyView()")
+        _binding = null
+        super.onDestroyView()
+    }
+
     companion object {
         private const val TAG = "BluetoothScannerFragment"
     }

@@ -100,6 +100,21 @@ class LocalAdapterFragment : Fragment(R.layout.fragment_bluetooth_adapter) {
         super.onStart()
     }
 
+    override fun onResume() {
+        Log.v(TAG, "onResume()")
+        super.onResume()
+    }
+
+    override fun onPause() {
+        Log.v(TAG, "onPause()")
+        super.onPause()
+    }
+
+    override fun onStop() {
+        Log.v(TAG, "onStop()")
+        super.onStop()
+    }
+
     override fun onDestroyView() {
         Log.i(TAG, "onDestroyView()")
         binding.tabLayout.removeOnTabSelectedListener(tabSelectedListener)

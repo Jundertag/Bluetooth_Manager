@@ -47,16 +47,26 @@ class MainActivity : AppCompatActivity() {
 
 
         if (savedInstanceState == null) {
-            Log.d(TAG, "created from cold state")
+            Log.i(TAG, "savedInstanceState == null")
+            Log.i(TAG, "adding and detaching all fragments via the fragment manager")
             supportFragmentManager.commitNow {
                 for (fragment in fragments) {
                     add(R.id.fragment_container, fragment.value, fragment.key)
                     detach(fragment.value)
                 }
+                Log.d(TAG, "attaching LOCAL_ADAPTER_FRAGMENT")
                 attach(fragments[LOCAL_ADAPTER_FRAGMENT]!!)
             }
         } else {
-            Log.d(TAG, "created from warm state")
+            Log.i(TAG, "savedInstanceState != null")
+            Log.i(TAG, "detaching all fragments via the fragment manager")
+            supportFragmentManager.commitNow {
+                for (fragment in fragments) {
+                    detach(fragment.value)
+                }
+                Log.d(TAG, "attaching LOCAL_ADAPTER_FRAGMENT")
+                attach(fragments[LOCAL_ADAPTER_FRAGMENT]!!)
+            }
         }
     }
 
@@ -96,11 +106,19 @@ class MainActivity : AppCompatActivity() {
             true
         }
 
-
-
         binding.bottomNavigation.setOnItemReselectedListener { item ->
             Log.v(TAG, "clicked on already selected item ${item.title}")
         }
+    }
+
+    override fun onResume() {
+        Log.v(TAG, "onResume()")
+        super.onResume()
+    }
+
+    override fun onPause() {
+        Log.v(TAG, "onPause()")
+        super.onPause()
     }
 
     override fun onStop() {
