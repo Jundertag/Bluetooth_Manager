@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.viewModels
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -15,9 +16,11 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.tabs.TabLayout
 import com.jayden.BluetoothManager.MainApplication
 import com.jayden.BluetoothManager.R
+import com.jayden.BluetoothManager.adapter.exception.AdapterNotOnException
 import com.jayden.BluetoothManager.databinding.FragmentBluetoothAdapterBinding
 import com.jayden.BluetoothManager.device.BoundDevicesFragment
 import com.jayden.BluetoothManager.device.DeviceCompatUi
+import com.jayden.BluetoothManager.permission.PermissionHelper
 import com.jayden.BluetoothManager.scanner.BluetoothScannerFragment
 import kotlinx.coroutines.launch
 
@@ -92,7 +95,14 @@ class LocalAdapterFragment : Fragment(R.layout.fragment_bluetooth_adapter) {
             Log.d(TAG, "savedInstanceState != null")
         }
 
-        viewModel.start()
+        try {
+            viewModel.start()
+        } catch (e: AdapterNotOnException) {
+            // TODO: ask to turn on adapter
+            val launcher = activity.registerForActivityResult(
+                ActivityResultContracts.StartActivityForResult()
+            )
+        }
     }
 
     override fun onStart() {

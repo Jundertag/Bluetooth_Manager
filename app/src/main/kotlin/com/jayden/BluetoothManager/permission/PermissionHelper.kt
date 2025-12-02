@@ -1,9 +1,16 @@
 package com.jayden.BluetoothManager.permission
 
 import android.annotation.SuppressLint
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import androidx.activity.ComponentActivity
+import androidx.activity.result.ActivityResultCaller
+import androidx.activity.result.contract.ActivityResultContracts
 import com.jayden.BluetoothManager.context.ContextUtils
 import com.jayden.BluetoothManager.permission.PermissionHelper.ProtectionLevel.Companion.fromInt
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 
 @SuppressLint("StaticFieldLeak")
 object PermissionHelper {
@@ -23,6 +30,24 @@ object PermissionHelper {
 
     fun getPermProtection(permission: String): ProtectionLevel {
         return ctx.packageManager.getPermissionInfo(permission, 0).protection.fromInt()
+    }
+
+    suspend fun requestPermissions(activity: ActivityResultCaller, permissions: Array<String>): Map<String, Boolean> {
+        return suspendCancellableCoroutine { coroutine ->
+            val launcher = activity.registerForActivityResult(
+                ActivityResultContracts.RequestMultiplePermissions()
+            ) { result ->
+                if (coroutine.isActive) {
+                    coroutine.resume(result)
+                }
+            }
+
+            coroutine.invokeOnCancellation {
+                // automatic clean up
+            }
+
+            launcher.launch(permissions)
+        }
     }
 
     enum class GrantState(val num: Int) {
