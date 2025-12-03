@@ -1,4 +1,4 @@
-package com.jayden.BluetoothManager.device
+package com.jayden.bluetooth.device
 
 import android.Manifest
 import android.view.LayoutInflater
@@ -11,11 +11,10 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.jayden.BluetoothManager.R
-import com.jayden.BluetoothManager.adapter.LocalDeviceAdapter
-import com.jayden.BluetoothManager.adapter.LocalAdapterViewModel
-import com.jayden.BluetoothManager.databinding.FragmentPairedDevicesBinding
-import com.jayden.BluetoothManager.permission.PermissionHelper
+import com.jayden.bluetooth.adapter.LocalDeviceAdapter
+import com.jayden.bluetooth.adapter.LocalAdapterViewModel
+import com.jayden.bluetooth.databinding.FragmentPairedDevicesBinding
+import com.jayden.bluetooth.permission.PermissionHelper
 import kotlinx.coroutines.launch
 
 class BoundDevicesFragment : Fragment() {

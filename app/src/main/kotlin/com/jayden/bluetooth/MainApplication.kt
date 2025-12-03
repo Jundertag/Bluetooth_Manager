@@ -1,7 +1,7 @@
-package com.jayden.BluetoothManager
+package com.jayden.bluetooth
 
 import android.app.Application
-import com.jayden.BluetoothManager.context.ContextUtils
+import com.jayden.bluetooth.context.ContextUtils
 
 class MainApplication : Application() {
     lateinit var applicationGraph: ApplicationGraph

@@ -1,14 +1,11 @@
-package com.jayden.BluetoothManager.permission
+package com.jayden.bluetooth.permission
 
 import android.annotation.SuppressLint
-import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Intent
-import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultCaller
 import androidx.activity.result.contract.ActivityResultContracts
-import com.jayden.BluetoothManager.context.ContextUtils
-import com.jayden.BluetoothManager.permission.PermissionHelper.ProtectionLevel.Companion.fromInt
+import com.jayden.bluetooth.context.ContextUtils
+import com.jayden.bluetooth.permission.PermissionHelper.ProtectionLevel.Companion.fromInt
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 

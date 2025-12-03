@@ -1,4 +1,4 @@
-package com.jayden.BluetoothManager.adapter
+package com.jayden.bluetooth.adapter
 
 import android.os.Bundle
 import android.util.Log
@@ -8,9 +8,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
-import com.jayden.BluetoothManager.R
-import com.jayden.BluetoothManager.databinding.FragmentAdapterStateBinding
-import com.jayden.BluetoothManager.device.BoundDevicesFragment
+import com.jayden.bluetooth.databinding.FragmentAdapterStateBinding
 import kotlinx.coroutines.launch
 
 class AdapterStateFragment : Fragment() {

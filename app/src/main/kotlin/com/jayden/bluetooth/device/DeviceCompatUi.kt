@@ -1,4 +1,4 @@
-package com.jayden.BluetoothManager.device
+package com.jayden.bluetooth.device
 
 data class DeviceCompatUi(
     val name: String,

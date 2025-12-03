@@ -1,8 +1,8 @@
-package com.jayden.BluetoothManager.adapter
+package com.jayden.bluetooth.adapter
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.jayden.BluetoothManager.ApplicationGraph
+import com.jayden.bluetooth.ApplicationGraph
 
 class LocalAdapterViewModelFactory(
     private val appGraph: ApplicationGraph

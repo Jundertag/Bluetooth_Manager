@@ -1,13 +1,8 @@
-package com.jayden.BluetoothManager.settings
+package com.jayden.bluetooth.settings
 
-import android.content.Intent
 import android.os.Bundle
-import androidx.activity.OnBackPressedCallback
-import androidx.activity.OnBackPressedDispatcher
-import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
-import com.jayden.BluetoothManager.databinding.ActivitySettingsBinding
-import com.jayden.BluetoothManager.main.MainActivity
+import com.jayden.bluetooth.databinding.ActivitySettingsBinding
 
 class SettingsActivity : AppCompatActivity() {
     private var _binding: ActivitySettingsBinding? = null

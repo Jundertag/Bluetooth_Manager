@@ -1,4 +1,4 @@
-package com.jayden.BluetoothManager.context
+package com.jayden.bluetooth.context
 
 import android.annotation.SuppressLint
 import android.content.Context

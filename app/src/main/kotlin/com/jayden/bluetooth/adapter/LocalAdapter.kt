@@ -1,4 +1,4 @@
-package com.jayden.BluetoothManager.adapter
+package com.jayden.bluetooth.adapter
 
 import android.Manifest
 import android.bluetooth.BluetoothDevice
@@ -7,13 +7,12 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.PackageManager
 import androidx.annotation.RequiresPermission
-import com.jayden.BluetoothManager.adapter.LocalAdapter.State.Companion.fromInt
-import com.jayden.BluetoothManager.adapter.exception.AdapterNotOnException
-import com.jayden.BluetoothManager.device.DeviceCompat
-import com.jayden.BluetoothManager.context.ContextUtils
-import com.jayden.BluetoothManager.permission.PermissionHelper
+import com.jayden.bluetooth.adapter.LocalAdapter.State.Companion.fromInt
+import com.jayden.bluetooth.adapter.exception.AdapterNotOnException
+import com.jayden.bluetooth.device.DeviceCompat
+import com.jayden.bluetooth.context.ContextUtils
+import com.jayden.bluetooth.permission.PermissionHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
