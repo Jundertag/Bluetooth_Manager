@@ -1,10 +1,12 @@
 package com.jayden.BluetoothManager.device
 
+import android.Manifest
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -13,6 +15,7 @@ import com.jayden.BluetoothManager.R
 import com.jayden.BluetoothManager.adapter.LocalDeviceAdapter
 import com.jayden.BluetoothManager.adapter.LocalAdapterViewModel
 import com.jayden.BluetoothManager.databinding.FragmentPairedDevicesBinding
+import com.jayden.BluetoothManager.permission.PermissionHelper
 import kotlinx.coroutines.launch
 
 class BoundDevicesFragment : Fragment() {
@@ -40,19 +43,43 @@ class BoundDevicesFragment : Fragment() {
             Log.v(TAG, "pairedDevicesView.layoutManager = ${it.layoutManager}\npairedDevicesView.adapter = ${it.adapter}")
         }
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.boundDevices.collect { devices ->
-                val deviceCompatUi = mutableListOf<DeviceCompatUi>()
-                devices.forEach { device ->
-                    val compatUi = DeviceCompatUi(
-                        name = device.name,
-                        address = device.address
-                    )
-                    deviceCompatUi.add(compatUi)
+        if (PermissionHelper.isGrantedPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
+            viewLifecycleOwner.lifecycleScope.launch {
+                viewModel.boundDevices.collect { devices ->
+                    val deviceCompatUi = mutableListOf<DeviceCompatUi>()
+                    devices.forEach { device ->
+                        val compatUi = DeviceCompatUi(
+                            name = device.name,
+                            address = device.address
+                        )
+                        deviceCompatUi.add(compatUi)
+                    }
+                    Log.v(TAG, "current devices: \n$deviceCompatUi")
+                    adapter.submitList(deviceCompatUi) {
+                        Log.v(TAG, "submitted list successfully")
+                    }
                 }
-                Log.v(TAG, "current devices: \n$deviceCompatUi")
-                adapter.submitList(deviceCompatUi) {
-                    Log.v(TAG, "submitted list successfully")
+            }
+        } else {
+            // TODO: request permissions
+            viewLifecycleOwner.lifecycleScope.launch {
+                val permissionResults = PermissionHelper.requestPermissions(requireActivity(), arrayOf(
+                        Manifest.permission.BLUETOOTH_CONNECT,
+                        Manifest.permission.BLUETOOTH_SCAN,
+                        Manifest.permission.BLUETOOTH_ADVERTISE
+                    )
+                )
+
+                for (result in permissionResults) {
+                    if (result.value) {
+                        Log.i(TAG, "permission: ${result.key}, has been granted.")
+                    } else {
+                        Log.i(TAG, "permission: ${result.key}, has not been granted.")
+                        if (result.key == Manifest.permission.BLUETOOTH_CONNECT) {
+                            Log.w(TAG, "required permission: ${result.key}")
+                            Toast.makeText(context, "permission BLUETOOTH_CONNECT is required for normal function.", Toast.LENGTH_LONG).show()
+                        }
+                    }
                 }
             }
         }
@@ -66,6 +93,10 @@ class BoundDevicesFragment : Fragment() {
     override fun onResume() {
         Log.v(TAG, "onResume()")
         super.onResume()
+    }
+
+    override fun onHiddenChanged(hidden: Boolean) {
+        Log.d(TAG, "onHiddenChanged(hidden = $hidden)")
     }
 
     override fun onPause() {

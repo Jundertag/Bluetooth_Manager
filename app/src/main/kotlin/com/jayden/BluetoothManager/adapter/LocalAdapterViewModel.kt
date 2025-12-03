@@ -19,9 +19,7 @@ class LocalAdapterViewModel(
     private val _boundDevices = MutableStateFlow(mutableListOf<DeviceCompat>())
     val boundDevices = _boundDevices.asStateFlow()
 
-    val requestEnableAction = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-
-    private val _adapterName = MutableStateFlow("")
+    private val _adapterName = MutableStateFlow("<no-bluetooth-connect-perms>")
     val adapterName = _adapterName.asStateFlow()
 
     /**
@@ -36,7 +34,14 @@ class LocalAdapterViewModel(
             // stops future code, change if necessary
             throw AdapterNotOnException()
         }
-        _boundDevices.value = adapter.pairedDevices.toMutableList()
+        _boundDevices.update {
+            try {
+                adapter.pairedDevices.toMutableList()
+            } catch (e: SecurityException) {
+                Log.w(TAG, "app doesn't have BLUETOOTH_CONNECT permissions", e)
+                mutableListOf()
+            }
+        }
         _adapterName.update {
             try {
                 adapter.name
