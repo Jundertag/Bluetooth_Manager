@@ -55,8 +55,10 @@ class MainActivity : AppCompatActivity() {
                     add(R.id.fragment_container, newFrag, fragment)
                     detach(newFrag)
                 }
-                Log.d(TAG, "attaching LOCAL_ADAPTER_FRAGMENT")
-                attach(requireFragment(fragments.first()))
+                runOnCommit {
+                    Log.d(TAG, "attaching LOCAL_ADAPTER_FRAGMENT")
+                    attach(requireFragment(fragments.first()))
+                }
             }
         } else {
             Log.i(TAG, "savedInstanceState != null")
@@ -65,8 +67,10 @@ class MainActivity : AppCompatActivity() {
                 for (fragment in fragments) {
                     detach(requireFragment(fragment))
                 }
-                Log.d(TAG, "attaching LOCAL_ADAPTER_FRAGMENT")
-                attach(requireFragment(fragments.first()))
+                runOnCommit {
+                    Log.d(TAG, "attaching LOCAL_ADAPTER_FRAGMENT")
+                    attach(requireFragment(fragments.first()))
+                }
             }
         }
     }
