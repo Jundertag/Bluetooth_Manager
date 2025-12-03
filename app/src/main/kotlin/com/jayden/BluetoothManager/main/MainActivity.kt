@@ -18,7 +18,7 @@ class MainActivity : AppCompatActivity() {
     private val binding get() = _binding!!
     private var cutout: Int = 0
 
-    private val fragments: Map<String, Fragment> = mapOf(LOCAL_ADAPTER_FRAGMENT to LocalAdapterFragment())
+    private val fragments: List<String> = listOf(LOCAL_ADAPTER_FRAGMENT)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.v(TAG, "onCreate(savedInstanceState = $savedInstanceState)")
@@ -51,21 +51,22 @@ class MainActivity : AppCompatActivity() {
             Log.i(TAG, "adding and detaching all fragments via the fragment manager")
             supportFragmentManager.commitNow {
                 for (fragment in fragments) {
-                    add(R.id.fragment_container, fragment.value, fragment.key)
-                    detach(fragment.value)
+                    val newFrag = newFragment(fragment)
+                    add(R.id.fragment_container, newFrag, fragment)
+                    detach(newFrag)
                 }
                 Log.d(TAG, "attaching LOCAL_ADAPTER_FRAGMENT")
-                attach(fragments[LOCAL_ADAPTER_FRAGMENT]!!)
+                attach(requireFragment(fragments.first()))
             }
         } else {
             Log.i(TAG, "savedInstanceState != null")
             Log.i(TAG, "detaching all fragments via the fragment manager")
             supportFragmentManager.commitNow {
                 for (fragment in fragments) {
-                    detach(fragment.value)
+                    detach(requireFragment(fragment))
                 }
                 Log.d(TAG, "attaching LOCAL_ADAPTER_FRAGMENT")
-                attach(fragments[LOCAL_ADAPTER_FRAGMENT]!!)
+                attach(requireFragment(fragments.first()))
             }
         }
     }
@@ -130,6 +131,21 @@ class MainActivity : AppCompatActivity() {
         Log.w(TAG, "onDestroy()")
         _binding = null
         super.onDestroy()
+    }
+
+    private fun getFragment(tag: String): Fragment? {
+        return supportFragmentManager.findFragmentByTag(tag)
+    }
+
+    private fun requireFragment(tag: String): Fragment {
+        return getFragment(tag)!!
+    }
+
+    private fun newFragment(tag: String): Fragment {
+        return when (tag) {
+            LOCAL_ADAPTER_FRAGMENT -> LocalAdapterFragment()
+            else -> throw IllegalStateException("expand list?")
+        }
     }
 
     private fun setNightMode(mode: Boolean, recreate: Boolean) {
