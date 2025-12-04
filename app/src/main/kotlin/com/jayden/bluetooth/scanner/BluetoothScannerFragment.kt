@@ -40,6 +40,10 @@ class BluetoothScannerFragment : Fragment() {
         super.onResume()
     }
 
+    override fun onHiddenChanged(hidden: Boolean) {
+        Log.v(TAG, "onHiddenChanged(hidden = $hidden)")
+    }
+
     override fun onPause() {
         Log.v(TAG, "onPause()")
         super.onPause()

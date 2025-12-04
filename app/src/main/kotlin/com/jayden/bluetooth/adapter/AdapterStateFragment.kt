@@ -7,7 +7,9 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.jayden.bluetooth.databinding.FragmentAdapterStateBinding
 import kotlinx.coroutines.launch
 
@@ -31,8 +33,16 @@ class AdapterStateFragment : Fragment() {
         Log.v(TAG, "onViewCreated(\n    view = $view, \n    savedInstanceState = $savedInstanceState\n)")
 
         viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.adapterName.collect { adapterName ->
-                binding.localAdapterName.text = adapterName
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.adapterName.collect { adapterName ->
+                    binding.localAdapterName.text = adapterName
+                }
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel
             }
         }
     }

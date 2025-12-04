@@ -4,6 +4,8 @@ import android.bluetooth.BluetoothManager
 import android.content.Context
 import com.jayden.bluetooth.adapter.LocalAdapter
 import com.jayden.bluetooth.context.ContextUtils
+import com.jayden.bluetooth.settings.SettingsDataStore
+import com.jayden.bluetooth.settings.dataStore
 
 class ApplicationGraph(
     private val appContext: Context
@@ -13,4 +15,8 @@ class ApplicationGraph(
     }
     val manager: BluetoothManager = appContext.getSystemService(BluetoothManager::class.java)
     val localAdapter: LocalAdapter = LocalAdapter(manager)
+
+    private val appSettingsDataStore = appContext.dataStore
+
+    val settingsDataStore = SettingsDataStore(appSettingsDataStore)
 }

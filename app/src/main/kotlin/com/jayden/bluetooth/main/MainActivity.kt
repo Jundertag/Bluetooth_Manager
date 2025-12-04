@@ -81,15 +81,15 @@ class MainActivity : AppCompatActivity() {
 
         when (nightMode) {
             Configuration.UI_MODE_NIGHT_YES -> {
-                Log.d(TAG, "onConfigurationChanged\$nightMode = true")
+                Log.d(TAG, $$"onConfigurationChanged$nightMode = true")
                 setNightMode(mode = true, recreate = true)
             }
             Configuration.UI_MODE_NIGHT_NO -> {
-                Log.d(TAG, "onConfigurationChanged\$nightMode = false")
+                Log.d(TAG, $$"onConfigurationChanged$nightMode = false")
                 setNightMode(mode = false, recreate = true)
             }
             else -> {
-                Log.w(TAG, "onConfigurationChanged\$nightMode = UNDEFINED")
+                Log.w(TAG, $$"onConfigurationChanged$nightMode = UNDEFINED")
                 setNightMode(mode = true, recreate = true)
             }
         }
@@ -108,7 +108,7 @@ class MainActivity : AppCompatActivity() {
                     setClass(applicationContext, SettingsActivity::class.java)
                 })
             }
-            true
+            false
         }
 
         binding.bottomNavigation.setOnItemReselectedListener { item ->

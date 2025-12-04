@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option java_package = "com.jayden.bluetooth.datastore.proto";
+option java_multiple_files = true;
+
+message AppSettings {
+  message UI {
+    enum Theme {
+      UNSPECIFIED = 0;
+      SYSTEM = 1;
+      LIGHT = 2;
+      DARK = 3;
+    }
+    Theme app_theme = 1;
+  }
+
+  UI ui = 1;
+}

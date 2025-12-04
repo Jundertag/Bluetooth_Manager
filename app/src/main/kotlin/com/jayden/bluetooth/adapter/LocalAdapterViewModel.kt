@@ -3,13 +3,18 @@ package com.jayden.bluetooth.adapter
 import android.Manifest
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.jayden.bluetooth.device.DeviceCompat
 import com.jayden.bluetooth.adapter.LocalAdapter.State
 import com.jayden.bluetooth.adapter.exception.AdapterNotOnException
 import com.jayden.bluetooth.permission.PermissionHelper
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.newCoroutineContext
 
 class LocalAdapterViewModel(
     private val adapter: LocalAdapter
@@ -20,32 +25,44 @@ class LocalAdapterViewModel(
     private val _adapterName = MutableStateFlow("<no-bluetooth-connect-perms>")
     val adapterName = _adapterName.asStateFlow()
 
+    private val _adapterState = MutableStateFlow(false)
+    val adapterState = _adapterState.asStateFlow()
+
     /**
-     * call when the app should hook into system resources such as bluetooth.
+     * call when the app should hook into bluetooth apis.
      *
      * should only be called once.
      */
     fun start() {
         Log.d(TAG, "start()")
-        if (adapter.state != State.STATE_ON) {
-            Log.w(TAG, "bluetooth is not on")
-            // stops future code, change if necessary
-            throw AdapterNotOnException()
-        }
-        _boundDevices.update {
-            try {
-                adapter.pairedDevices.toMutableList()
-            } catch (e: SecurityException) {
-                Log.w(TAG, "app doesn't have BLUETOOTH_CONNECT permissions", e)
-                mutableListOf()
+
+        viewModelScope.launch {
+            adapter.state.collect { state ->
+                _adapterState.update {
+                    state == State.STATE_ON
+                }
             }
         }
-        _adapterName.update {
-            try {
-                adapter.name
-            } catch (e: SecurityException) {
-                Log.w(TAG, "app doesn't have BLUETOOTH_CONNECT permissions", e)
-                "<no-bluetooth-connect-perms>"
+
+        viewModelScope.launch {
+            adapter.name.collect { name ->
+                _adapterName.update {
+                    name
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            adapter.pairedDevices.collect { devices ->
+                _boundDevices.update { list ->
+                    list.removeAll { !devices.contains(it) }
+                    devices.forEach {
+                        if (!list.contains(it)) {
+                            list.addFirst(it)
+                        }
+                    }
+                    list
+                }
             }
         }
     }
@@ -56,12 +73,12 @@ class LocalAdapterViewModel(
      * @return true if [Manifest.permission.BLUETOOTH_SCAN] permission was granted and therefore discovery has started, false otherwise.
      */
     fun startDiscovery(): Boolean {
-        if (PermissionHelper.isGrantedPermission(Manifest.permission.BLUETOOTH_SCAN)) {
+        return if (PermissionHelper.isGrantedPermission(Manifest.permission.BLUETOOTH_SCAN)) {
             @Suppress("MissingPermission")
             adapter.startDiscovery()
-            return true
+            true
         } else {
-            return false
+            false
         }
     }
 

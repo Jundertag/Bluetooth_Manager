@@ -9,7 +9,9 @@ import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.jayden.bluetooth.adapter.LocalDeviceAdapter
 import com.jayden.bluetooth.adapter.LocalAdapterViewModel
@@ -44,18 +46,20 @@ class BoundDevicesFragment : Fragment() {
 
         if (PermissionHelper.isGrantedPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
             viewLifecycleOwner.lifecycleScope.launch {
-                viewModel.boundDevices.collect { devices ->
-                    val deviceCompatUi = mutableListOf<DeviceCompatUi>()
-                    devices.forEach { device ->
-                        val compatUi = DeviceCompatUi(
-                            name = device.name,
-                            address = device.address
-                        )
-                        deviceCompatUi.add(compatUi)
-                    }
-                    Log.v(TAG, "current devices: \n$deviceCompatUi")
-                    adapter.submitList(deviceCompatUi) {
-                        Log.v(TAG, "submitted list successfully")
+                repeatOnLifecycle(Lifecycle.State.STARTED) {
+                    viewModel.boundDevices.collect { devices ->
+                        val deviceCompatUi = mutableListOf<DeviceCompatUi>()
+                        devices.forEach { device ->
+                            val compatUi = DeviceCompatUi(
+                                name = device.name,
+                                address = device.address
+                            )
+                            deviceCompatUi.add(compatUi)
+                        }
+                        Log.v(TAG, "current devices: \n$deviceCompatUi")
+                        adapter.submitList(deviceCompatUi) {
+                            Log.v(TAG, "submitted list successfully")
+                        }
                     }
                 }
             }
@@ -72,6 +76,7 @@ class BoundDevicesFragment : Fragment() {
                 for (result in permissionResults) {
                     if (result.value) {
                         Log.i(TAG, "permission: ${result.key}, has been granted.")
+                        if (result.key == Manifest.permission.BLUETOOTH_CONNECT) viewModel.permissionGranted()
                     } else {
                         Log.i(TAG, "permission: ${result.key}, has not been granted.")
                         if (result.key == Manifest.permission.BLUETOOTH_CONNECT) {
@@ -95,7 +100,7 @@ class BoundDevicesFragment : Fragment() {
     }
 
     override fun onHiddenChanged(hidden: Boolean) {
-        Log.d(TAG, "onHiddenChanged(hidden = $hidden)")
+        Log.v(TAG, "onHiddenChanged(hidden = $hidden)")
     }
 
     override fun onPause() {

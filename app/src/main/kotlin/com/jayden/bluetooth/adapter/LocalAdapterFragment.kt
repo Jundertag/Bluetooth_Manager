@@ -130,7 +130,7 @@ class LocalAdapterFragment : Fragment(R.layout.fragment_bluetooth_adapter) {
                 ActivityResultContracts.StartActivityForResult()
             ) { result ->
                 if (result.resultCode == Activity.RESULT_OK) {
-                    viewModel.start()
+
                 }
             }
 
