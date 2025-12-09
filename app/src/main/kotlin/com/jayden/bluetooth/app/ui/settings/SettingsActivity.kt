@@ -1,16 +1,22 @@
-package com.jayden.bluetooth.settings
+package com.jayden.bluetooth.app.ui.settings
 
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import com.jayden.bluetooth.MainApplication
 import com.jayden.bluetooth.databinding.ActivitySettingsBinding
+import com.jayden.bluetooth.app.viewmodel.settings.SettingsViewModel
+import com.jayden.bluetooth.app.viewmodel.settings.SettingsViewModelFactory
 
 class SettingsActivity : AppCompatActivity() {
     private var _binding: ActivitySettingsBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: SettingsViewModel by viewModels(factoryProducer = { SettingsViewModelFactory((application as MainApplication).applicationGraph) })
+    private val viewModel: SettingsViewModel by viewModels(factoryProducer = {
+        SettingsViewModelFactory(
+            (application as MainApplication).applicationGraph
+        )
+    })
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

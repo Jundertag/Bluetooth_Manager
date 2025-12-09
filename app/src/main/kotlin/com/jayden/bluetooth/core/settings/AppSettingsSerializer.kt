@@ -1,4 +1,4 @@
-package com.jayden.bluetooth.settings
+package com.jayden.bluetooth.core.settings
 
 import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.Serializer

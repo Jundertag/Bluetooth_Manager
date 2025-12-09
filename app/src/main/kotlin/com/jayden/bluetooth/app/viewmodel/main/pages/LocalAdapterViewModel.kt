@@ -1,20 +1,16 @@
-package com.jayden.bluetooth.adapter
+package com.jayden.bluetooth.app.viewmodel.main.pages
 
 import android.Manifest
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.jayden.bluetooth.data.adapter.LocalAdapter
 import com.jayden.bluetooth.device.DeviceCompat
-import com.jayden.bluetooth.adapter.LocalAdapter.State
-import com.jayden.bluetooth.adapter.exception.AdapterNotOnException
-import com.jayden.bluetooth.permission.PermissionHelper
-import kotlinx.coroutines.ensureActive
+import com.jayden.bluetooth.utils.PermissionHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.newCoroutineContext
 
 class LocalAdapterViewModel(
     private val adapter: LocalAdapter
@@ -39,7 +35,7 @@ class LocalAdapterViewModel(
         viewModelScope.launch {
             adapter.state.collect { state ->
                 _adapterState.update {
-                    state == State.STATE_ON
+                    state == LocalAdapter.State.STATE_ON
                 }
             }
         }

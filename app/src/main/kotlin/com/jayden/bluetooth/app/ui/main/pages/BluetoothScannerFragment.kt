@@ -1,4 +1,4 @@
-package com.jayden.bluetooth.scanner
+package com.jayden.bluetooth.app.ui.main.pages
 
 import android.os.Bundle
 import android.util.Log
@@ -7,7 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import com.jayden.bluetooth.adapter.LocalAdapterViewModel
+import com.jayden.bluetooth.app.viewmodel.main.pages.LocalAdapterViewModel
 import com.jayden.bluetooth.databinding.FragmentBluetoothScannerBinding
 
 class BluetoothScannerFragment : Fragment() {

@@ -1,4 +1,4 @@
-package com.jayden.bluetooth.main
+package com.jayden.bluetooth.app.ui.main
 
 import android.content.Intent
 import android.content.res.Configuration
@@ -9,9 +9,9 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commitNow
 import com.jayden.bluetooth.R
-import com.jayden.bluetooth.adapter.LocalAdapterFragment
+import com.jayden.bluetooth.app.ui.main.pages.LocalAdapterFragment
 import com.jayden.bluetooth.databinding.ActivityMainBinding
-import com.jayden.bluetooth.settings.SettingsActivity
+import com.jayden.bluetooth.app.ui.settings.SettingsActivity
 
 class MainActivity : AppCompatActivity() {
     private var _binding: ActivityMainBinding? = null

@@ -1,8 +1,9 @@
-package com.jayden.bluetooth.settings
+package com.jayden.bluetooth.app.viewmodel.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jayden.bluetooth.datastore.proto.AppSettings
+import com.jayden.bluetooth.core.settings.SettingsDataStore
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn

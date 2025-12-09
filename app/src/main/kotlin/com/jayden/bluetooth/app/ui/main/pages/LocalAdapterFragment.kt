@@ -1,4 +1,4 @@
-package com.jayden.bluetooth.adapter
+package com.jayden.bluetooth.app.ui.main.pages
 
 import android.Manifest
 import android.app.Activity
@@ -11,19 +11,23 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.fragment.app.viewModels
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commitNow
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.tabs.TabLayout
 import com.jayden.bluetooth.MainApplication
 import com.jayden.bluetooth.R
+import com.jayden.bluetooth.app.ui.main.pages.AdapterStateFragment
+import com.jayden.bluetooth.app.viewmodel.main.pages.LocalAdapterViewModel
+import com.jayden.bluetooth.app.viewmodel.main.pages.LocalAdapterViewModelFactory
 import com.jayden.bluetooth.adapter.exception.AdapterNotOnException
 import com.jayden.bluetooth.databinding.FragmentBluetoothAdapterBinding
-import com.jayden.bluetooth.device.BoundDevicesFragment
-import com.jayden.bluetooth.permission.PermissionHelper
-import com.jayden.bluetooth.scanner.BluetoothScannerFragment
+import com.jayden.bluetooth.app.ui.main.pages.BoundDevicesFragment
+import com.jayden.bluetooth.utils.PermissionHelper
+import com.jayden.bluetooth.app.ui.main.pages.BluetoothScannerFragment
 import kotlinx.coroutines.launch
+import kotlin.collections.iterator
 
 class LocalAdapterFragment : Fragment(R.layout.fragment_bluetooth_adapter) {
     private var _binding: FragmentBluetoothAdapterBinding? = null

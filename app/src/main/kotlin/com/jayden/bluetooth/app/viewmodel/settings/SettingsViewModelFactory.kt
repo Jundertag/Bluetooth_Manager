@@ -1,16 +1,14 @@
-package com.jayden.bluetooth.adapter
+package com.jayden.bluetooth.app.viewmodel.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.jayden.bluetooth.ApplicationGraph
 
-class LocalAdapterViewModelFactory(
+class SettingsViewModelFactory(
     private val appGraph: ApplicationGraph
 ) : ViewModelProvider.Factory {
-    @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return LocalAdapterViewModel(
-            appGraph.localAdapter
-        ) as T
+        @Suppress("UNCHECKED_CAST")
+        return SettingsViewModel(appGraph.settingsDataStore) as T
     }
 }

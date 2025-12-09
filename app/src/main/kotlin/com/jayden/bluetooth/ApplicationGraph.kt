@@ -2,10 +2,10 @@ package com.jayden.bluetooth
 
 import android.bluetooth.BluetoothManager
 import android.content.Context
-import com.jayden.bluetooth.adapter.LocalAdapter
-import com.jayden.bluetooth.context.ContextUtils
-import com.jayden.bluetooth.settings.SettingsDataStore
-import com.jayden.bluetooth.settings.dataStore
+import com.jayden.bluetooth.data.adapter.LocalAdapter
+import com.jayden.bluetooth.utils.ContextUtils
+import com.jayden.bluetooth.core.settings.SettingsDataStore
+import com.jayden.bluetooth.core.settings.dataStore
 
 class ApplicationGraph(
     private val appContext: Context

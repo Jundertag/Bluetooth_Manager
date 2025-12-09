@@ -1,4 +1,4 @@
-package com.jayden.bluetooth.adapter
+package com.jayden.bluetooth.app.ui.main.pages
 
 import android.os.Bundle
 import android.util.Log
@@ -10,6 +10,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.jayden.bluetooth.app.viewmodel.main.pages.LocalAdapterViewModel
 import com.jayden.bluetooth.databinding.FragmentAdapterStateBinding
 import kotlinx.coroutines.launch
 

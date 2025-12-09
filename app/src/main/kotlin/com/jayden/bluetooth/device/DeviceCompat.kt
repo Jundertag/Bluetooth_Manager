@@ -7,9 +7,14 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import androidx.annotation.RequiresPermission
+import com.jayden.bluetooth.adapter.exception.AdapterNotOnException
 import com.jayden.bluetooth.device.DeviceCompat.BondState.Companion.fromInt
-import com.jayden.bluetooth.context.ContextUtils
-import com.jayden.bluetooth.permission.PermissionHelper
+import com.jayden.bluetooth.device.exception.DeviceServiceException
+import com.jayden.bluetooth.utils.ContextUtils
+import com.jayden.bluetooth.utils.PermissionHelper
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 
@@ -26,78 +31,126 @@ class DeviceCompat(
     /**
      * The alias of the bluetooth device
      *
-     * @throws SecurityException if the app doesn't have [Manifest.permission.BLUETOOTH_CONNECT] permission
+     * The backend implementation in [BluetoothDevice] tries to get the service.
+     * If null, an error is logged with "BT not enabled.". We try to throw
+     * [DeviceServiceException] in this case if we know the adapter is on.
+     *
+     * @return the friendly alias of the device, or null if there is none
+     *
+     * @throws AdapterNotOnException if the adapter is not on
+     * @throws DeviceServiceException on BluetoothDevice.getService() null error
+     * @throws SecurityException not granted [Manifest.permission.BLUETOOTH_CONNECT] permission.
+     * Flow will also report null if caught
      */
-    val alias: String?
-        @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
-        get() {
-            return if (PermissionHelper.isGrantedPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
-                device.alias
+    val alias: Flow<String?> = callbackFlow {
+        val alias = device.alias
+        if (alias == null) {
+            throw AdapterNotOnException("system error also plausible") // most likely, but system error can sometimes be plausible
+        } else {
+            if (device.alias != device.name) {
+                trySend(device.alias)
             } else {
-                throw SecurityException()
+                trySend(null)
             }
         }
+
+        val aliasReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                if (!PermissionHelper.isGrantedPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
+                    trySend(null)
+                    throw SecurityException()
+                } else {
+                    val device = intent.getParcelableExtra(
+                        BluetoothDevice.EXTRA_DEVICE,
+                        BluetoothDevice::class.java
+                    )
+                    if (device == this@DeviceCompat.device) {
+                        val alias = device.alias
+                        if (alias == null) {
+                            throw DeviceServiceException() // realistically should never happen
+                        } else {
+                            if (device.alias == device.name) {
+                                trySend(device.alias)
+                            } else {
+                                trySend(null)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        ctx.registerReceiver(aliasReceiver, IntentFilter(BluetoothDevice.ACTION_ALIAS_CHANGED))
+
+        awaitClose { ctx.unregisterReceiver(aliasReceiver) }
+    }
 
     /**
      * The friendly name of the bluetooth device
      *
-     * @throws SecurityException if the app doesn't have [Manifest.permission.BLUETOOTH_CONNECT] permission
+     * @throws SecurityException not granted [Manifest.permission.BLUETOOTH_CONNECT] permission
      */
-    val name: String @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
-    get() {
-        if (PermissionHelper.isGrantedPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
-            return device.name
-        } else {
-            throw SecurityException()
+    val name: Flow<String> = callbackFlow {
+        trySend(device.name)
+
+        val nameReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                if (!PermissionHelper.isGrantedPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
+                    trySend("<no-permission>")
+                    throw SecurityException()
+                } else {
+                    val device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
+                    if (device == this@DeviceCompat.device) {
+                        val name = intent.getStringExtra(BluetoothDevice.EXTRA_NAME)
+                        if (name == null) {
+                            trySend("<no-name>")
+                        } else {
+                            trySend(name)
+                        }
+                    }
+                }
+            }
         }
     }
 
+    val rawDevice get() = this.device
+
     var rssi: Int? = null
+    var transport: Transport? = null
 
     /**
      * Suspends until the desired [state] is reached
      *
      * @param state The bond state
      * @param timeoutMs Max suspend duration
-     *
-     * @throws SecurityException if the app is not given [Manifest.permission.BLUETOOTH_CONNECT] permission
      */
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     suspend fun waitForBondState(state: BondState, timeoutMs: Long = 30_000L) {
-        if (PermissionHelper.isGrantedPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
-            withTimeoutOrNull(timeoutMs) {
-                if (device.bondState.fromInt() == state) {
-                    return@withTimeoutOrNull
-                }
-
-                suspendCancellableCoroutine {
-                    val filter = IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
-
-                    val receiver = object : BroadcastReceiver() {
-                        override fun onReceive(context: Context, intent: Intent) {
-                            val bondState = intent.getIntExtra(
-                                BluetoothDevice.EXTRA_BOND_STATE,
-                                BluetoothDevice.ERROR
-                            )
-                            if (bondState.fromInt() == state && it.isActive) {
-                                ctx.unregisterReceiver(this)
-                                it.resumeWith(Result.success(Unit))
-                            }
+        withTimeoutOrNull(timeoutMs) {
+            if (device.bondState.fromInt() == state) {
+                return@withTimeoutOrNull
+            }
+            suspendCancellableCoroutine {
+                val filter = IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
+                val receiver = object : BroadcastReceiver() {
+                    override fun onReceive(context: Context, intent: Intent) {
+                        val bondState = intent.getIntExtra(
+                            BluetoothDevice.EXTRA_BOND_STATE,
+                            BluetoothDevice.ERROR
+                        )
+                        if (bondState.fromInt() == state && it.isActive) {
+                            ctx.unregisterReceiver(this)
+                            it.resumeWith(Result.success(Unit))
                         }
                     }
-
-                    ctx.registerReceiver(receiver, filter)
-
-                    it.invokeOnCancellation {
-                        try {
-                            ctx.unregisterReceiver(receiver)
-                        } catch (_: Exception) {
-                        }
+                }
+                ctx.registerReceiver(receiver, filter)
+                it.invokeOnCancellation {
+                    try {
+                        ctx.unregisterReceiver(receiver)
+                    } catch (_: Exception) {
                     }
                 }
             }
-        } else {
-            throw SecurityException()
         }
     }
 
@@ -108,12 +161,20 @@ class DeviceCompat(
 
         companion object {
             private val lookup = entries.associateBy { it.num }
-            fun Int.fromInt(): BondState {
-                return lookup[this]!!
-            }
-            fun BondState.toInt(): Int {
-                return this.num
-            }
+            fun Int.fromInt(): BondState = lookup[this]!!
+            fun BondState.toInt(): Int = this.num
+        }
+    }
+
+    enum class Transport(val num: Int) {
+        TRANSPORT_BREDR(1),
+        TRANSPORT_LE(2);
+
+        companion object {
+            private val lookup = entries.associateBy { it.num }
+
+            fun Int.transportFromInt(): Transport = lookup[this]!!
+            fun Transport.transportToInt(): Int = this.num
         }
     }
 }
