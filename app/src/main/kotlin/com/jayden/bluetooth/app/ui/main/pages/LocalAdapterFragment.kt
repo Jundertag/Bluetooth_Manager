@@ -18,14 +18,11 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.material.tabs.TabLayout
 import com.jayden.bluetooth.MainApplication
 import com.jayden.bluetooth.R
-import com.jayden.bluetooth.app.ui.main.pages.AdapterStateFragment
 import com.jayden.bluetooth.app.viewmodel.main.pages.LocalAdapterViewModel
 import com.jayden.bluetooth.app.viewmodel.main.pages.LocalAdapterViewModelFactory
-import com.jayden.bluetooth.adapter.exception.AdapterNotOnException
+import com.jayden.bluetooth.data.adapter.exception.AdapterNotOnException
 import com.jayden.bluetooth.databinding.FragmentBluetoothAdapterBinding
-import com.jayden.bluetooth.app.ui.main.pages.BoundDevicesFragment
 import com.jayden.bluetooth.utils.PermissionHelper
-import com.jayden.bluetooth.app.ui.main.pages.BluetoothScannerFragment
 import kotlinx.coroutines.launch
 import kotlin.collections.iterator
 

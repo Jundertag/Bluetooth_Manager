@@ -5,7 +5,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jayden.bluetooth.data.adapter.LocalAdapter
-import com.jayden.bluetooth.device.DeviceCompat
+import com.jayden.bluetooth.data.device.DeviceCompat
 import com.jayden.bluetooth.utils.PermissionHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

@@ -15,11 +15,11 @@ import androidx.annotation.RequiresPermission
 import com.jayden.bluetooth.data.adapter.LocalAdapter.ConnectionState.Companion.connectionStateFromInt
 import com.jayden.bluetooth.data.adapter.LocalAdapter.PlayState.Companion.playStateFromInt
 import com.jayden.bluetooth.data.adapter.LocalAdapter.State.Companion.stateFromInt
-import com.jayden.bluetooth.device.DeviceCompat
-import com.jayden.bluetooth.device.DeviceCompat.Transport.Companion.transportFromInt
-import com.jayden.bluetooth.device.exception.DeviceNotReceivedException
+import com.jayden.bluetooth.data.device.DeviceCompat
+import com.jayden.bluetooth.data.device.DeviceCompat.Transport.Companion.transportFromInt
+import com.jayden.bluetooth.data.device.DeviceEvent
+import com.jayden.bluetooth.data.device.exception.DeviceNotReceivedException
 import com.jayden.bluetooth.utils.ContextUtils
-import com.jayden.bluetooth.utils.PermissionHelper
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -122,13 +122,16 @@ class LocalAdapter(
     /**
      * The adapter's name returned as a [Flow], will be empty if adapter is off, or display a message specifying missing permissions.
      */
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     val name: Flow<String> = callbackFlow {
+        @Suppress("MissingPermission")
+        trySend(adapter.name)
         val nameReceiver = object : BroadcastReceiver() {
             override fun onReceive(
-                context: Context?,
-                intent: Intent?
+                context: Context,
+                intent: Intent
             ) {
-                trySend(intent?.getStringExtra(BluetoothAdapter.EXTRA_LOCAL_NAME) ?: "")
+                trySend(intent.getStringExtra(BluetoothAdapter.EXTRA_LOCAL_NAME) ?: "")
             }
         }
         ctx.registerReceiver(nameReceiver, IntentFilter(BluetoothAdapter.ACTION_LOCAL_NAME_CHANGED))
@@ -137,29 +140,36 @@ class LocalAdapter(
     }
 
     private var _a2dpProfile: A2dpProfile? = null
-    val a2dpProfile get() = _a2dpProfile!!
+    val a2dpProfile get() = _a2dpProfile
+    fun requireA2dpProfile() = _a2dpProfile!!
 
     private var _headsetProfile: HeadsetProfile? = null
-    val headsetProfile get() = _headsetProfile!!
+    val headsetProfile get() = _headsetProfile
+    fun requireHeadsetProfile() = _headsetProfile!!
 
-    val discoveredDevices: Flow<MutableList<DeviceCompat>> = callbackFlow {
-        val devices: MutableList<DeviceCompat> = mutableListOf()
+    /**
+     * [Flow] of discovered devices wrapped in a set of [DeviceEvent].
+     *
+     * @sample com.jayden.bluetooth.samples.DiscoveredDevicesSample
+     */
+    @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
+    val discoveredDevices: Flow<Set<DeviceEvent>> = callbackFlow {
+        val devices: MutableSet<DeviceCompat> = mutableSetOf()
         val deviceReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                val device = intent!!.getParcelableExtra(
+            override fun onReceive(context: Context, intent: Intent) {
+                val device = intent.getParcelableExtra(
                     BluetoothDevice.EXTRA_DEVICE,
                     BluetoothDevice::class.java
-                )!!
-                val rssi = intent.getIntExtra(BluetoothDevice.EXTRA_RSSI, BluetoothDevice.ERROR)
-                val compat = DeviceCompat(device).also {
-                    if (rssi != BluetoothDevice.ERROR) {
-                        it.rssi = rssi
-                    }
+                )
+                val rssi = intent.getIntExtra(BluetoothDevice.EXTRA_RSSI, -1)
+
+                if (device == null) {
+                    trySend(setOf(DeviceEvent.Error(msg = "received null device, ignoring...")))
+                } else {
+                    devices.add(DeviceCompat(device))
+                    trySend(devices.map { device -> DeviceEvent.Found(device) }.toSet())
                 }
-                if (!devices.contains(compat)) {
-                    devices.add(compat)
-                }
-                trySend(devices)
+
             }
         }
 
@@ -246,7 +256,7 @@ class LocalAdapter(
 
         companion object {
             private val lookup = entries.associateBy { it.num }
-            fun Int.stateFromInt(): State = lookup[this]!!
+            fun Int.stateFromInt(): State = lookup[this] ?: State.STATE_OFF
             fun State.stateToInt(): Int = this.num
         }
     }
@@ -272,7 +282,7 @@ class LocalAdapter(
         companion object {
             private val lookup = entries.associateBy { it.num }
 
-            fun Int.connectionStateFromInt(): ConnectionState = lookup[this]!!
+            fun Int.connectionStateFromInt(): ConnectionState = lookup[this] ?: ConnectionState.STATE_DISCONNECTED
             fun ConnectionState.connectionStateToInt(): Int = this.num
         }
     }
@@ -284,56 +294,45 @@ class LocalAdapter(
         companion object {
             private val lookup = entries.associateBy { it.num }
 
-            fun Int.playStateFromInt(): PlayState = lookup[this]!!
+            fun Int.playStateFromInt(): PlayState = lookup[this] ?: PlayState.STATE_NOT_PLAYING
             fun PlayState.playStateToInt(): Int = this.num
         }
     }
 
     @Suppress("MissingPermission")
     inner class A2dpProfile(proxy: BluetoothA2dp) {
-        private val device = proxy.getDevicesMatchingConnectionStates(intArrayOf(
-            BluetoothA2dp.STATE_CONNECTED,
-            BluetoothA2dp.STATE_CONNECTING,
-            BluetoothA2dp.STATE_DISCONNECTING)
-        ).firstOrNull()
-
         @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
-        val connectionState: Flow<ConnectionState> = callbackFlow {
-            if (device == null) {
-                trySend(ConnectionState.STATE_DISCONNECTED)
-            } else {
-                trySend(proxy.getConnectionState(device).connectionStateFromInt())
-            }
-            val connectionCallback = object : BroadcastReceiver() {
-                override fun onReceive(context: Context?, intent: Intent?) {
-                    val state = intent!!.getIntExtra(BluetoothProfile.EXTRA_STATE, BluetoothDevice.ERROR)
-                    if (state != BluetoothDevice.ERROR) {
-                        trySend(state.connectionStateFromInt())
+        val connectedDevices: Flow<Set<DeviceEvent>> = callbackFlow {
+            var devices: MutableSet<DeviceEvent> = mutableSetOf()
+
+            devices = proxy.connectedDevices.map { DeviceEvent.Found(DeviceCompat(it)) }.toMutableSet()
+            trySend(devices.toSet())
+            val deviceReceiver = object : BroadcastReceiver() {
+                override fun onReceive(context: Context, intent: Intent) {
+                    when (intent.action) {
+                        BluetoothDevice.ACTION_ACL_CONNECTED -> {
+                            val device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
+
+                            if (device == null) {
+                                devices.add(DeviceEvent.Error(msg = "received null device, ignoring...", `throw` = DeviceNotReceivedException()))
+                            } else {
+                                devices.add(DeviceEvent.Found(DeviceCompat(device)))
+                            }
+                            trySend(devices.toSet())
+                        }
                     }
                 }
             }
-            ctx.registerReceiver(connectionCallback, IntentFilter(BluetoothA2dp.ACTION_CONNECTION_STATE_CHANGED))
-
-            awaitClose { ctx.unregisterReceiver(connectionCallback) }
         }
 
         @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
         val playState: Flow<PlayState> = callbackFlow {
-            if (device == null) {
-                trySend(PlayState.STATE_NOT_PLAYING)
-            } else {
-                val playing = proxy.isA2dpPlaying(device)
-                if (playing) {
-                    trySend(PlayState.STATE_PLAYING)
-                } else {
-                    trySend(PlayState.STATE_NOT_PLAYING)
-                }
-            }
+
 
             val playStateReceiver = object : BroadcastReceiver() {
-                override fun onReceive(context: Context?, intent: Intent?) {
-                    val state = intent!!.getIntExtra(BluetoothProfile.EXTRA_STATE, BluetoothDevice.ERROR)
-                    if (state != BluetoothDevice.ERROR) {
+                override fun onReceive(context: Context, intent: Intent) {
+                    val state = intent.getIntExtra(BluetoothProfile.EXTRA_STATE, BluetoothAdapter.ERROR)
+                    if (state != BluetoothAdapter.ERROR) {
                         trySend(state.playStateFromInt())
                     }
                 }
@@ -346,6 +345,9 @@ class LocalAdapter(
 
     @Suppress("MissingPermission")
     inner class HeadsetProfile(proxy: BluetoothHeadset) {
+        /**
+         * devices that are connected and compatible with the [BluetoothHeadset] profile
+         */
         @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
         val connectedDevices: Flow<MutableList<DeviceCompat>> = callbackFlow {
             val devices = mutableListOf<DeviceCompat>()
@@ -377,7 +379,7 @@ class LocalAdapter(
                             if (device == null) {
                                 throw DeviceNotReceivedException()
                             } else {
-                                val removable = devices.takeIf { devices ->
+                                devices.takeIf { devices ->
                                     var result = false
                                     devices.forEach {
                                         if (it.rawDevice == device) {
@@ -385,9 +387,8 @@ class LocalAdapter(
                                         }
                                     }
                                     result
-                                }?.firstOrNull()
-                                if (removable != null) {
-                                    devices.remove(removable)
+                                }?.firstOrNull()?.let {
+                                    devices.remove(it)
                                 }
                             }
                         }
@@ -402,6 +403,9 @@ class LocalAdapter(
             awaitClose { ctx.unregisterReceiver(deviceReceiver) }
         }
 
+        /**
+         * devices that are discovered and compatible with the [BluetoothHeadset] profile
+         */
         @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
         val discoveredDevices: Flow<MutableList<DeviceCompat>> = callbackFlow {
 

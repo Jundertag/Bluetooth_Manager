@@ -13,10 +13,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.jayden.bluetooth.adapter.LocalDeviceAdapter
+import com.jayden.bluetooth.app.adapter.LocalDeviceAdapter
 import com.jayden.bluetooth.app.viewmodel.main.pages.LocalAdapterViewModel
 import com.jayden.bluetooth.databinding.FragmentPairedDevicesBinding
-import com.jayden.bluetooth.device.DeviceCompatUi
+import com.jayden.bluetooth.model.DeviceCompatUi
 import com.jayden.bluetooth.utils.PermissionHelper
 import kotlinx.coroutines.launch
 import kotlin.collections.iterator

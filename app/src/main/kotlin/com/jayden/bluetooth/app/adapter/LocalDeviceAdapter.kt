@@ -1,13 +1,13 @@
-package com.jayden.bluetooth.adapter
+package com.jayden.bluetooth.app.adapter
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import android.util.Log
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.jayden.bluetooth.databinding.ItemDeviceViewBinding
-import com.jayden.bluetooth.device.DeviceCompatUi
+import com.jayden.bluetooth.model.DeviceCompatUi
 
 class LocalDeviceAdapter : ListAdapter<DeviceCompatUi, LocalDeviceAdapter.ViewHolder>(DiffCallback) {
 

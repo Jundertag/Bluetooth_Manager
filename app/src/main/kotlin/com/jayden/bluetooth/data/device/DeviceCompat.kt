@@ -1,4 +1,4 @@
-package com.jayden.bluetooth.device
+package com.jayden.bluetooth.data.device
 
 import android.Manifest
 import android.bluetooth.BluetoothDevice
@@ -7,9 +7,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import androidx.annotation.RequiresPermission
-import com.jayden.bluetooth.adapter.exception.AdapterNotOnException
-import com.jayden.bluetooth.device.DeviceCompat.BondState.Companion.fromInt
-import com.jayden.bluetooth.device.exception.DeviceServiceException
+import com.jayden.bluetooth.data.adapter.exception.AdapterNotOnException
+import com.jayden.bluetooth.data.device.DeviceCompat.BondState.Companion.fromInt
+import com.jayden.bluetooth.data.device.DeviceCompat.DeviceType.Companion.deviceTypeFromInt
+import com.jayden.bluetooth.data.device.exception.DeviceServiceException
 import com.jayden.bluetooth.utils.ContextUtils
 import com.jayden.bluetooth.utils.PermissionHelper
 import kotlinx.coroutines.channels.awaitClose
@@ -18,7 +19,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 
-class DeviceCompat(
+open class DeviceCompat(
     private val device: BluetoothDevice
 ) {
     private val ctx: Context = ContextUtils.getAppContext()
@@ -112,9 +113,38 @@ class DeviceCompat(
         }
     }
 
+    /**
+     * The device type
+     *
+     * @throws SecurityException not granted [Manifest.permission.BLUETOOTH_CONNECT] permission
+     */
+    val deviceType: Flow<DeviceType> = callbackFlow {
+        if (!PermissionHelper.isGrantedPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
+            throw SecurityException()
+        } else {
+            trySend(device.type.deviceTypeFromInt())
+        }
+    }
+
+    /**
+     * gets the raw [BluetoothDevice] held by this proxy.
+     *
+     * rarely necessary and unsafe practically. Only use read-only
+     */
     val rawDevice get() = this.device
 
+    /**
+     * received signal strength indicator
+     *
+     * only update when data suggests so.
+     */
     var rssi: Int? = null
+
+    /**
+     * transport used to communicate with the device
+     *
+     * matches with [BluetoothDevice.getType] except it's the currently connected channel.
+     */
     var transport: Transport? = null
 
     /**
@@ -175,6 +205,19 @@ class DeviceCompat(
 
             fun Int.transportFromInt(): Transport = lookup[this]!!
             fun Transport.transportToInt(): Int = this.num
+        }
+    }
+
+    enum class DeviceType(val num: Int) {
+        DEVICE_TYPE_UNKNOWN(0),
+        DEVICE_TYPE_CLASSIC(1),
+        DEVICE_TYPE_LE(2);
+
+        companion object {
+            private val lookup = entries.associateBy { it.num }
+
+            fun Int.deviceTypeFromInt(): DeviceType = lookup[this]!!
+            fun DeviceType.deviceTypeToInt(): Int = this.num
         }
     }
 }

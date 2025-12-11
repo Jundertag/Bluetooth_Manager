@@ -1,7 +1,7 @@
-package com.jayden.bluetooth.device
+package com.jayden.bluetooth.model
 
 data class DeviceCompatUi(
-    val name: String,
+    val name: String = "<no-name>",
     val address: String,
     val rssi: String = "",
 )

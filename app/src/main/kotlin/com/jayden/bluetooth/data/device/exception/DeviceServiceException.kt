@@ -1,4 +1,4 @@
-package com.jayden.bluetooth.device.exception
+package com.jayden.bluetooth.data.device.exception
 
 class DeviceServiceException(
     override val message: String? = null,

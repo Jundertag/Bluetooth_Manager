@@ -1,4 +1,4 @@
-package com.jayden.bluetooth.adapter.exception
+package com.jayden.bluetooth.data.adapter.exception
 
 /**
  * Generic Local Adapter Errors

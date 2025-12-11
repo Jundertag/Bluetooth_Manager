@@ -1,4 +1,4 @@
-package com.jayden.bluetooth.adapter.exception
+package com.jayden.bluetooth.data.adapter.exception
 
 import android.bluetooth.BluetoothAdapter
 
