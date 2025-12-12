@@ -248,7 +248,7 @@ class LocalAdapter(
 
         companion object {
             private val lookup = entries.associateBy { it.num }
-            fun Int.stateFromInt(): State = lookup[this] ?: State.STATE_OFF
+            fun Int.stateFromInt(): State = lookup[this] ?: STATE_OFF
             fun State.stateToInt(): Int = this.num
         }
     }
