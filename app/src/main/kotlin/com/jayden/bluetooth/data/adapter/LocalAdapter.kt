@@ -12,9 +12,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import androidx.annotation.RequiresPermission
-import com.jayden.bluetooth.data.adapter.LocalAdapter.ConnectionState.Companion.connectionStateFromInt
-import com.jayden.bluetooth.data.adapter.LocalAdapter.PlayState.Companion.playStateFromInt
+import com.jayden.bluetooth.data.adapter.LocalAdapter.ProfileProxy.Companion.proxyFromInt
+import com.jayden.bluetooth.data.adapter.LocalAdapter.ProfileProxy.Companion.proxyToInt
 import com.jayden.bluetooth.data.adapter.LocalAdapter.State.Companion.stateFromInt
+import com.jayden.bluetooth.data.device.A2dpDeviceCompat
 import com.jayden.bluetooth.data.device.DeviceCompat
 import com.jayden.bluetooth.data.device.DeviceCompat.Transport.Companion.transportFromInt
 import com.jayden.bluetooth.data.device.DeviceEvent
@@ -22,19 +23,21 @@ import com.jayden.bluetooth.data.device.exception.DeviceNotReceivedException
 import com.jayden.bluetooth.utils.ContextUtils
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
 class LocalAdapter(
     manager: BluetoothManager
 ) {
-    private val adapter = manager.adapter
+    val adapter: BluetoothAdapter = manager.adapter
 
     private val ctx: Context = ContextUtils.getAppContext()
 
     /**
-     * Current state of the local adapter as a [kotlinx.coroutines.flow.Flow]
+     * Current state of the local adapter as a [Flow]
      */
     val state: Flow<State> = callbackFlow {
         trySend(adapter.state.stateFromInt())
@@ -139,13 +142,59 @@ class LocalAdapter(
         awaitClose { ctx.unregisterReceiver(nameReceiver) }
     }
 
-    private var _a2dpProfile: A2dpProfile? = null
-    val a2dpProfile get() = _a2dpProfile
-    fun requireA2dpProfile() = _a2dpProfile!!
+    /**
+     * With the context of the profile, perform the specified operations...
+     *
+     * but wait! it's suspending!!!
+     *
+     * @throws IllegalStateException if profile type is not a parent subtype of [Profile]
+     */
+    suspend inline fun <reified T : Profile> withProfile(block: T.() -> Unit) {
+        val (proxyType, profile) = when (T::class) {
+            A2dpProfile::class -> {
+                ProfileProxy.A2DP to (getProfile(ProfileProxy.A2DP) as A2dpProfile)
+            }
+            HeadsetProfile::class -> {
+                ProfileProxy.HEADSET to (getProfile(ProfileProxy.HEADSET) as HeadsetProfile)
+            }
+            else -> error("profile ${T::class.simpleName} is not supported on android")
+        }
 
-    private var _headsetProfile: HeadsetProfile? = null
-    val headsetProfile get() = _headsetProfile
-    fun requireHeadsetProfile() = _headsetProfile!!
+        try {
+            (profile as T).block()
+        } finally {
+            adapter.closeProfileProxy(proxyType.proxyToInt(), profile.rawProfile)
+        }
+    }
+
+    suspend fun getProfile(type: ProfileProxy): Profile = suspendCancellableCoroutine {
+        val profileCallback = object : BluetoothProfile.ServiceListener {
+            override fun onServiceConnected(
+                profile: Int,
+                proxy: BluetoothProfile?
+            ) {
+                if (profile == type.proxyToInt() && proxy != null && it.isActive) {
+                    val profileProxy: Profile = when (profile.proxyFromInt()) {
+                        ProfileProxy.A2DP -> {
+                            A2dpProfile(proxy as BluetoothA2dp)
+                        }
+                        ProfileProxy.HEADSET -> {
+                            HeadsetProfile(proxy as BluetoothHeadset)
+                        }
+                    }
+                    it.resume(profileProxy)
+                }
+            }
+
+            override fun onServiceDisconnected(profile: Int) {
+
+            }
+
+        }
+        if (!adapter.getProfileProxy(ctx, profileCallback, type.proxyToInt())) {
+            it.cancel(null)
+        }
+    }
 
     /**
      * [Flow] of discovered devices wrapped in a set of [DeviceEvent].
@@ -176,65 +225,6 @@ class LocalAdapter(
         ctx.registerReceiver(deviceReceiver, IntentFilter(BluetoothDevice.ACTION_FOUND))
 
         awaitClose { ctx.unregisterReceiver(deviceReceiver) }
-    }
-
-
-    /**
-     * loads the [profile] into memory which can be accessed with dot syntax
-     *
-     * will block until the bluetooth profile is loaded into memory
-     *
-     * @param profile one of [ProfileProxy.HEADSET] or [ProfileProxy.A2DP]
-     *
-     * @return true when the profile loads, false if there was an API error.
-     */
-    suspend fun loadProfileProxy(profile: ProfileProxy): Boolean {
-        return suspendCancellableCoroutine { continuation ->
-            val profileReceiver = object : BluetoothProfile.ServiceListener {
-                override fun onServiceConnected(
-                    profile: Int,
-                    proxy: BluetoothProfile?
-                ) {
-                    when (profile) {
-                        BluetoothProfile.A2DP -> {
-                            _a2dpProfile = A2dpProfile(proxy as BluetoothA2dp)
-                            continuation.resume(true)
-                        }
-
-                        BluetoothProfile.HEADSET -> {
-                            _headsetProfile = HeadsetProfile(proxy as BluetoothHeadset)
-                            continuation.resume(true)
-                        }
-                    }
-                }
-
-                override fun onServiceDisconnected(profile: Int) {}
-            }
-            if (continuation.isActive) {
-                when (profile) {
-                    ProfileProxy.A2DP -> {
-                        if (!adapter.getProfileProxy(ctx, profileReceiver, BluetoothProfile.A2DP)) {
-                            continuation.resume(false)
-                        }
-                    }
-
-                    ProfileProxy.HEADSET -> {
-                        if (!adapter.getProfileProxy(
-                                ctx,
-                                profileReceiver,
-                                BluetoothProfile.HEADSET
-                            )
-                        ) {
-                            continuation.resume(false)
-                        }
-                    }
-                }
-            }
-
-            continuation.invokeOnCancellation {
-                // automatic clean up
-            }
-        }
     }
 
     @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
@@ -273,142 +263,5 @@ class LocalAdapter(
         }
     }
 
-    enum class ConnectionState(val num: Int) {
-        STATE_DISCONNECTED(0),
-        STATE_CONNECTING(1),
-        STATE_CONNECTED(2),
-        STATE_DISCONNECTING(3);
 
-        companion object {
-            private val lookup = entries.associateBy { it.num }
-
-            fun Int.connectionStateFromInt(): ConnectionState = lookup[this] ?: ConnectionState.STATE_DISCONNECTED
-            fun ConnectionState.connectionStateToInt(): Int = this.num
-        }
-    }
-
-    enum class PlayState(val num: Int) {
-        STATE_PLAYING(10),
-        STATE_NOT_PLAYING(11);
-
-        companion object {
-            private val lookup = entries.associateBy { it.num }
-
-            fun Int.playStateFromInt(): PlayState = lookup[this] ?: PlayState.STATE_NOT_PLAYING
-            fun PlayState.playStateToInt(): Int = this.num
-        }
-    }
-
-    @Suppress("MissingPermission")
-    inner class A2dpProfile(proxy: BluetoothA2dp) {
-        @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
-        val connectedDevices: Flow<Set<DeviceEvent>> = callbackFlow {
-            var devices: MutableSet<DeviceEvent> = mutableSetOf()
-
-            devices = proxy.connectedDevices.map { DeviceEvent.Found(DeviceCompat(it)) }.toMutableSet()
-            trySend(devices.toSet())
-            val deviceReceiver = object : BroadcastReceiver() {
-                override fun onReceive(context: Context, intent: Intent) {
-                    when (intent.action) {
-                        BluetoothDevice.ACTION_ACL_CONNECTED -> {
-                            val device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
-
-                            if (device == null) {
-                                devices.add(DeviceEvent.Error(msg = "received null device, ignoring...", `throw` = DeviceNotReceivedException()))
-                            } else {
-                                devices.add(DeviceEvent.Found(DeviceCompat(device)))
-                            }
-                            trySend(devices.toSet())
-                        }
-                    }
-                }
-            }
-        }
-
-        @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
-        val playState: Flow<PlayState> = callbackFlow {
-
-
-            val playStateReceiver = object : BroadcastReceiver() {
-                override fun onReceive(context: Context, intent: Intent) {
-                    val state = intent.getIntExtra(BluetoothProfile.EXTRA_STATE, BluetoothAdapter.ERROR)
-                    if (state != BluetoothAdapter.ERROR) {
-                        trySend(state.playStateFromInt())
-                    }
-                }
-            }
-            ctx.registerReceiver(playStateReceiver, IntentFilter(BluetoothA2dp.ACTION_PLAYING_STATE_CHANGED))
-
-            awaitClose { ctx.unregisterReceiver(playStateReceiver) }
-        }
-    }
-
-    @Suppress("MissingPermission")
-    inner class HeadsetProfile(proxy: BluetoothHeadset) {
-        /**
-         * devices that are connected and compatible with the [BluetoothHeadset] profile
-         */
-        @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
-        val connectedDevices: Flow<MutableList<DeviceCompat>> = callbackFlow {
-            val devices = mutableListOf<DeviceCompat>()
-            proxy.connectedDevices.forEach { device ->
-                devices.add(DeviceCompat(device))
-            }
-            trySend(devices)
-
-            val deviceReceiver = object : BroadcastReceiver() {
-                override fun onReceive(context: Context, intent: Intent) {
-                    when (intent.action) {
-                        BluetoothDevice.ACTION_ACL_CONNECTED -> {
-                            val device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
-                            val transport = intent.getIntExtra(BluetoothDevice.EXTRA_TRANSPORT, BluetoothDevice.ERROR)
-
-                            if (device == null) {
-                                throw DeviceNotReceivedException()
-                            } else {
-                                devices.add(DeviceCompat(device).also {
-                                    if (transport != BluetoothDevice.ERROR) {
-                                        it.transport = transport.transportFromInt()
-                                    }
-                                })
-                            }
-                        }
-                        BluetoothDevice.ACTION_ACL_DISCONNECTED -> {
-                            val device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
-
-                            if (device == null) {
-                                throw DeviceNotReceivedException()
-                            } else {
-                                devices.takeIf { devices ->
-                                    var result = false
-                                    devices.forEach {
-                                        if (it.rawDevice == device) {
-                                            result = true
-                                        }
-                                    }
-                                    result
-                                }?.firstOrNull()?.let {
-                                    devices.remove(it)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            ctx.registerReceiver(deviceReceiver, IntentFilter().apply {
-                addAction(BluetoothDevice.ACTION_ACL_CONNECTED)
-                addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED)
-            })
-
-            awaitClose { ctx.unregisterReceiver(deviceReceiver) }
-        }
-
-        /**
-         * devices that are discovered and compatible with the [BluetoothHeadset] profile
-         */
-        @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
-        val discoveredDevices: Flow<MutableList<DeviceCompat>> = callbackFlow {
-
-        }
-    }
 }

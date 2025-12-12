@@ -1,15 +1,19 @@
 package com.jayden.bluetooth.data.device
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.util.Log
 import androidx.annotation.RequiresPermission
+import com.jayden.bluetooth.core.exception.PermissionException
 import com.jayden.bluetooth.data.adapter.exception.AdapterNotOnException
 import com.jayden.bluetooth.data.device.DeviceCompat.BondState.Companion.fromInt
 import com.jayden.bluetooth.data.device.DeviceCompat.DeviceType.Companion.deviceTypeFromInt
+import com.jayden.bluetooth.data.device.exception.DeviceNotReceivedException
 import com.jayden.bluetooth.data.device.exception.DeviceServiceException
 import com.jayden.bluetooth.utils.ContextUtils
 import com.jayden.bluetooth.utils.PermissionHelper
@@ -22,7 +26,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 open class DeviceCompat(
     private val device: BluetoothDevice
 ) {
-    private val ctx: Context = ContextUtils.getAppContext()
+    protected val ctx: Context = ContextUtils.getAppContext()
 
     /**
      * The non-nullable address of the bluetooth device
@@ -32,34 +36,28 @@ open class DeviceCompat(
     /**
      * The alias of the bluetooth device
      *
-     * The backend implementation in [BluetoothDevice] tries to get the service.
-     * If null, an error is logged with "BT not enabled.". We try to throw
-     * [DeviceServiceException] in this case if we know the adapter is on.
+     * @see [com.jayden.bluetooth.data.adapter.LocalAdapter.discoveredDevices] for an example usage of the API
      *
-     * @return the friendly alias of the device, or null if there is none
-     *
-     * @throws AdapterNotOnException if the adapter is not on
-     * @throws DeviceServiceException on BluetoothDevice.getService() null error
-     * @throws SecurityException not granted [Manifest.permission.BLUETOOTH_CONNECT] permission.
-     * Flow will also report null if caught
+     * @return the friendly alias of the device
      */
-    val alias: Flow<String?> = callbackFlow {
+    @SuppressLint("MissingPermission")
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    val alias: Flow<DeviceEvent> = callbackFlow {
         val alias = device.alias
         if (alias == null) {
-            throw AdapterNotOnException("system error also plausible") // most likely, but system error can sometimes be plausible
+
         } else {
             if (device.alias != device.name) {
-                trySend(device.alias)
+                trySend(DeviceEvent.Alias(alias = device.alias))
             } else {
-                trySend(null)
+                trySend(DeviceEvent.Alias(alias = null))
             }
         }
 
         val aliasReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 if (!PermissionHelper.isGrantedPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
-                    trySend(null)
-                    throw SecurityException()
+                    trySend(DeviceEvent.Error(msg = "permission BLUETOOTH_CONNECT is not granted", `throw` = PermissionException()))
                 } else {
                     val device = intent.getParcelableExtra(
                         BluetoothDevice.EXTRA_DEVICE,
@@ -68,13 +66,11 @@ open class DeviceCompat(
                     if (device == this@DeviceCompat.device) {
                         val alias = device.alias
                         if (alias == null) {
-                            throw DeviceServiceException() // realistically should never happen
+                            trySend(DeviceEvent.Error(msg = "android `getService()` returned null", `throw` = DeviceServiceException()))
+                        } else if (device.alias == device.name) {
+                            trySend(DeviceEvent.Alias(alias = null))
                         } else {
-                            if (device.alias == device.name) {
-                                trySend(device.alias)
-                            } else {
-                                trySend(null)
-                            }
+                            trySend(DeviceEvent.Alias(alias = device.alias))
                         }
                     }
                 }
@@ -88,29 +84,53 @@ open class DeviceCompat(
     /**
      * The friendly name of the bluetooth device
      *
-     * @throws SecurityException not granted [Manifest.permission.BLUETOOTH_CONNECT] permission
+     * @see [com.jayden.bluetooth.data.adapter.LocalAdapter.discoveredDevices] for an example usage of the API
+     *
+     * @return the friendly name of the device
      */
-    val name: Flow<String> = callbackFlow {
-        trySend(device.name)
+    @SuppressLint("MissingPermission")
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    val name: Flow<DeviceEvent> = callbackFlow {
+        if (!PermissionHelper.isGrantedPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
+            trySend(
+                DeviceEvent.Error(
+                    msg = "permission BLUETOOTH_CONNECT is not granted",
+                    `throw` = PermissionException()
+                )
+            )
+        } else if (device.name == null) {
+            trySend(DeviceEvent.Name(name = device.name))
+        }
 
         val nameReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 if (!PermissionHelper.isGrantedPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
-                    trySend("<no-permission>")
-                    throw SecurityException()
+                    trySend(DeviceEvent.Error(msg = "permission BLUETOOTH_CONNECT is not granted", `throw` = PermissionException()))
                 } else {
                     val device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
-                    if (device == this@DeviceCompat.device) {
-                        val name = intent.getStringExtra(BluetoothDevice.EXTRA_NAME)
-                        if (name == null) {
-                            trySend("<no-name>")
-                        } else {
-                            trySend(name)
+
+                    when (device) {
+                        null -> {
+                            trySend(
+                                DeviceEvent.Error(
+                                    msg = "received null device, ignoring...",
+                                    `throw` = DeviceNotReceivedException()
+                                )
+                            )
+                        }
+                        this@DeviceCompat.device -> {
+                            trySend(DeviceEvent.Name(name = device.name))
+                        }
+                        else -> {
+                            Log.v(TAG, "received unrelated device ${device.name ?: "<no-name>"}")
                         }
                     }
                 }
             }
         }
+        ctx.registerReceiver(nameReceiver, IntentFilter(BluetoothDevice.ACTION_NAME_CHANGED))
+
+        awaitClose { ctx.unregisterReceiver(nameReceiver) }
     }
 
     /**
@@ -219,5 +239,23 @@ open class DeviceCompat(
             fun Int.deviceTypeFromInt(): DeviceType = lookup[this]!!
             fun DeviceType.deviceTypeToInt(): Int = this.num
         }
+    }
+
+    enum class ConnectionState(val num: Int) {
+        STATE_DISCONNECTED(0),
+        STATE_CONNECTING(1),
+        STATE_CONNECTED(2),
+        STATE_DISCONNECTING(3);
+
+        companion object {
+            private val lookup = entries.associateBy { it.num }
+
+            fun Int.connectionStateFromInt(): ConnectionState = lookup[this] ?: STATE_DISCONNECTED
+            fun ConnectionState.connectionStateToInt(): Int = this.num
+        }
+    }
+
+    companion object {
+        private const val TAG = "DeviceCompat"
     }
 }

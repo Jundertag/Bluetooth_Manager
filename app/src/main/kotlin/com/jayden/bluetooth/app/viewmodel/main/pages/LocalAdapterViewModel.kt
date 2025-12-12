@@ -4,8 +4,10 @@ import android.Manifest
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.jayden.bluetooth.data.adapter.A2dpProfile
 import com.jayden.bluetooth.data.adapter.LocalAdapter
 import com.jayden.bluetooth.data.device.DeviceCompat
+import com.jayden.bluetooth.data.device.DeviceEvent
 import com.jayden.bluetooth.utils.PermissionHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -32,6 +34,7 @@ class LocalAdapterViewModel(
     fun start() {
         Log.d(TAG, "start()")
 
+        // generic adapter state
         viewModelScope.launch {
             adapter.state.collect { state ->
                 _adapterState.update {
@@ -54,14 +57,30 @@ class LocalAdapterViewModel(
                     list.removeAll { !devices.contains(it) }
                     devices.forEach {
                         if (!list.contains(it)) {
-                            list.addFirst(it)
+                            list.add(it)
                         }
                     }
                     list
                 }
             }
         }
+
+        // A2dpProfile state
+        viewModelScope.launch {
+            adapter.withProfile<A2dpProfile> {
+                connectedDevices.collect { events ->
+                    events.forEach { event ->
+                        when (event) {
+                            is DeviceEvent.Found -> {
+                                event.device
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
+
 
     /**
      * Proxy method, start discovery process on the bluetooth adapter
