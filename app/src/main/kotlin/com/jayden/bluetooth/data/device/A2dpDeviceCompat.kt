@@ -13,10 +13,9 @@ import androidx.annotation.RequiresPermission
 import com.jayden.bluetooth.data.device.A2dpDeviceCompat.PlayState.Companion.playStateFromInt
 import com.jayden.bluetooth.data.device.DeviceCompat.ConnectionState.Companion.connectionStateFromInt
 import com.jayden.bluetooth.data.device.DeviceEvent.A2dpDeviceEvent
-import com.jayden.bluetooth.data.device.exception.A2dpDeviceConnectionStateNotReceivedException
-import com.jayden.bluetooth.data.device.exception.A2dpDevicePlayStateNotReceivedException
+import com.jayden.bluetooth.data.device.exception.DeviceConnectionStateNotReceivedException
+import com.jayden.bluetooth.data.device.exception.DevicePlayStateNotReceivedException
 import com.jayden.bluetooth.data.device.exception.DeviceNotReceivedException
-import com.jayden.bluetooth.utils.ContextUtils
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -48,7 +47,7 @@ class A2dpDeviceCompat(private val device: BluetoothDevice) : DeviceCompat(devic
                     trySend(
                         A2dpDeviceEvent.Error(
                             msg = "received null play state, ignoring...",
-                            `throw` = A2dpDevicePlayStateNotReceivedException()
+                            `throw` = DevicePlayStateNotReceivedException()
                         )
                     )
                 } else {
@@ -83,7 +82,7 @@ class A2dpDeviceCompat(private val device: BluetoothDevice) : DeviceCompat(devic
                     trySend(
                         A2dpDeviceEvent.Error(
                             msg = "received null connection state, ignoring...",
-                            `throw` = A2dpDeviceConnectionStateNotReceivedException()
+                            `throw` = DeviceConnectionStateNotReceivedException()
                         )
                     )
                 } else {

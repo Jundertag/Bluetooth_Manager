@@ -1,6 +1,7 @@
 package com.jayden.bluetooth.data.device
 
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothHeadset
 import com.jayden.bluetooth.data.adapter.HeadsetProfile
 import com.jayden.bluetooth.data.device.DeviceEvent.HeadsetDeviceEvent
 import kotlinx.coroutines.flow.Flow
@@ -8,10 +9,13 @@ import kotlinx.coroutines.flow.callbackFlow
 
 class HeadsetDeviceCompat(
     private val device: BluetoothDevice,
+    private val proxy: BluetoothHeadset
 ) : DeviceCompat(device) {
 
     val audioState: Flow<HeadsetDeviceEvent> = callbackFlow {
-        if ()
+        if (proxy.isAudioConnected(device)) {
+            trySend(HeadsetDeviceEvent.AudioState(AudioState.STATE_AUDIO_CONNECTED))
+        }
     }
 
     enum class AudioState(val num: Int) {

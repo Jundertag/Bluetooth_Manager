@@ -6,6 +6,7 @@ import com.jayden.bluetooth.data.adapter.LocalAdapter
 import com.jayden.bluetooth.utils.ContextUtils
 import com.jayden.bluetooth.core.settings.SettingsDataStore
 import com.jayden.bluetooth.core.settings.dataStore
+import com.jayden.bluetooth.repo.adapter.LocalAdapterRepo
 
 class ApplicationGraph(
     private val appContext: Context
@@ -15,6 +16,7 @@ class ApplicationGraph(
     }
     val manager: BluetoothManager = appContext.getSystemService(BluetoothManager::class.java)
     val localAdapter: LocalAdapter = LocalAdapter(manager)
+    val localAdapterRepo: LocalAdapterRepo = LocalAdapterRepo(localAdapter)
 
     private val appSettingsDataStore = appContext.dataStore
 

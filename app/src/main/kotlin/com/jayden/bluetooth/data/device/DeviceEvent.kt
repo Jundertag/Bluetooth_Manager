@@ -19,4 +19,10 @@ sealed class DeviceEvent {
         data class ConnectionState(val state: DeviceCompat.ConnectionState) : HeadsetDeviceEvent()
         data class Error(val msg: String? = null, val `throw`: Throwable? = null) : HeadsetDeviceEvent()
     }
+
+    sealed class HearingAidDeviceEvent {
+        data class Found(val device: DeviceCompat) : HearingAidDeviceEvent()
+        data class ConnectionState(val state: DeviceCompat.ConnectionState) : HearingAidDeviceEvent()
+        data class Error(val msg: String? = null, val `throw`: Throwable? = null) : HearingAidDeviceEvent()
+    }
 }

@@ -1,6 +1,7 @@
 package com.jayden.bluetooth.data.adapter
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothA2dp
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
@@ -61,8 +62,9 @@ class LocalAdapter(
     /**
      * Represents a [Flow] of the devices that are paired to this adapter (including disconnected devices)
      */
+    @SuppressLint("MissingPermission")
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
-    val pairedDevices: Flow<MutableList<DeviceCompat>> = callbackFlow {
+    val pairedDevices: Flow<List<DeviceCompat>> = callbackFlow {
         val devicesList = mutableListOf<DeviceCompat>()
         adapter.bondedDevices.forEach { device ->
             devicesList.add(DeviceCompat(device))
@@ -82,7 +84,7 @@ class LocalAdapter(
                         it.rssi = rssi
                     }
                 })
-                trySend(devicesList)
+                trySend(devicesList.toList())
             }
         }
         ctx.registerReceiver(deviceReceiver, IntentFilter(BluetoothDevice.ACTION_FOUND))
@@ -262,6 +264,4 @@ class LocalAdapter(
             fun ProfileProxy.proxyToInt(): Int = this.num
         }
     }
-
-
 }

@@ -8,6 +8,7 @@ import com.jayden.bluetooth.data.adapter.A2dpProfile
 import com.jayden.bluetooth.data.adapter.LocalAdapter
 import com.jayden.bluetooth.data.device.DeviceCompat
 import com.jayden.bluetooth.data.device.DeviceEvent
+import com.jayden.bluetooth.repo.adapter.LocalAdapterRepo
 import com.jayden.bluetooth.utils.PermissionHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,7 +16,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class LocalAdapterViewModel(
-    private val adapter: LocalAdapter
+    private val repo: LocalAdapterRepo
 ) : ViewModel() {
     private val _boundDevices = MutableStateFlow(mutableListOf<DeviceCompat>())
     val boundDevices = _boundDevices.asStateFlow()
@@ -33,52 +34,7 @@ class LocalAdapterViewModel(
      */
     fun start() {
         Log.d(TAG, "start()")
-
-        // generic adapter state
-        viewModelScope.launch {
-            adapter.state.collect { state ->
-                _adapterState.update {
-                    state == LocalAdapter.State.STATE_ON
-                }
-            }
-        }
-
-        viewModelScope.launch {
-            adapter.name.collect { name ->
-                _adapterName.update {
-                    name
-                }
-            }
-        }
-
-        viewModelScope.launch {
-            adapter.pairedDevices.collect { devices ->
-                _boundDevices.update { list ->
-                    list.removeAll { !devices.contains(it) }
-                    devices.forEach {
-                        if (!list.contains(it)) {
-                            list.add(it)
-                        }
-                    }
-                    list
-                }
-            }
-        }
-
-        // A2dpProfile state
-        viewModelScope.launch {
-            adapter.withProfile<A2dpProfile> {
-                connectedDevices.collect { events ->
-                    events.forEach { event ->
-                        when (event) {
-                            is DeviceEvent.Found -> {
-                                event.device
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        // TODO: repo hooks
     }
 
 
@@ -90,7 +46,7 @@ class LocalAdapterViewModel(
     fun startDiscovery(): Boolean {
         return if (PermissionHelper.isGrantedPermission(Manifest.permission.BLUETOOTH_SCAN)) {
             @Suppress("MissingPermission")
-            adapter.startDiscovery()
+            repo.startDiscovery()
             true
         } else {
             false
