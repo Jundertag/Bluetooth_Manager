@@ -10,14 +10,23 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.jayden.bluetooth.MainApplication
 import com.jayden.bluetooth.app.adapter.LocalDeviceAdapter
 import com.jayden.bluetooth.app.viewmodel.main.pages.LocalAdapterViewModel
+import com.jayden.bluetooth.app.viewmodel.main.pages.LocalAdapterViewModelFactory
+import com.jayden.bluetooth.data.device.DeviceEvent
 import com.jayden.bluetooth.databinding.FragmentPairedDevicesBinding
 import com.jayden.bluetooth.model.DeviceCompatUi
 import com.jayden.bluetooth.utils.PermissionHelper
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlin.collections.iterator
 
@@ -27,7 +36,12 @@ class BoundDevicesFragment : Fragment() {
 
     private lateinit var adapter: LocalDeviceAdapter
 
-    private val viewModel by viewModels<LocalAdapterViewModel>(ownerProducer = { requireParentFragment() })
+    private val viewModel by viewModels<LocalAdapterViewModel>(
+        ownerProducer = { requireParentFragment() },
+        factoryProducer = {
+            LocalAdapterViewModelFactory((requireActivity().application as MainApplication).applicationGraph)
+        }
+    )
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentPairedDevicesBinding.inflate(inflater, container, false)
@@ -43,49 +57,13 @@ class BoundDevicesFragment : Fragment() {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = this@BoundDevicesFragment.adapter
         }.also {
-            Log.v(TAG, "pairedDevicesView.layoutManager = ${it.layoutManager}\npairedDevicesView.adapter = ${it.adapter}")
+            Log.v(TAG, "set layoutManager to reference a new LinearLayoutManager\nset adapter to reference LocalDeviceAdapter for device display list")
         }
 
-        if (PermissionHelper.isGrantedPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
-            viewLifecycleOwner.lifecycleScope.launch {
-                repeatOnLifecycle(Lifecycle.State.STARTED) {
-                    viewModel.boundDevices.collect { devices ->
-                        val deviceCompatUi = mutableListOf<DeviceCompatUi>()
-                        devices.forEach { device ->
-                            val compatUi = DeviceCompatUi(
-                                name = device.name,
-                                address = device.address
-                            )
-                            deviceCompatUi.add(compatUi)
-                        }
-                        Log.v(TAG, "current devices: \n$deviceCompatUi")
-                        adapter.submitList(deviceCompatUi) {
-                            Log.v(TAG, "submitted list successfully")
-                        }
-                    }
-                }
-            }
-        } else {
-            // TODO: request permissions
-            viewLifecycleOwner.lifecycleScope.launch {
-                val permissionResults = PermissionHelper.requestPermissions(requireActivity(), arrayOf(
-                        Manifest.permission.BLUETOOTH_CONNECT,
-                        Manifest.permission.BLUETOOTH_SCAN,
-                        Manifest.permission.BLUETOOTH_ADVERTISE
-                    )
-                )
-
-                for (result in permissionResults) {
-                    if (result.value) {
-                        Log.i(TAG, "permission: ${result.key}, has been granted.")
-                        if (result.key == Manifest.permission.BLUETOOTH_CONNECT) viewModel.permissionGranted()
-                    } else {
-                        Log.i(TAG, "permission: ${result.key}, has not been granted.")
-                        if (result.key == Manifest.permission.BLUETOOTH_CONNECT) {
-                            Log.w(TAG, "required permission: ${result.key}")
-                            Toast.makeText(context, "permission BLUETOOTH_CONNECT is required for normal function.", Toast.LENGTH_LONG).show()
-                        }
-                    }
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.boundDevices.collect { devices ->
+                    adapter.submitList(devices.mapNotNull { it.ui.flowWithLifecycle(viewLifecycleOwner.lifecycle).firstOrNull() })
                 }
             }
         }

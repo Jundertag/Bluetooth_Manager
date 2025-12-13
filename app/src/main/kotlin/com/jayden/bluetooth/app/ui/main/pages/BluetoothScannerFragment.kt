@@ -7,14 +7,21 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import com.jayden.bluetooth.MainApplication
 import com.jayden.bluetooth.app.viewmodel.main.pages.LocalAdapterViewModel
+import com.jayden.bluetooth.app.viewmodel.main.pages.LocalAdapterViewModelFactory
 import com.jayden.bluetooth.databinding.FragmentBluetoothScannerBinding
 
 class BluetoothScannerFragment : Fragment() {
     private var _binding: FragmentBluetoothScannerBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel by viewModels<LocalAdapterViewModel>(ownerProducer = { requireParentFragment() })
+    private val viewModel by viewModels<LocalAdapterViewModel>(
+        ownerProducer = { requireParentFragment() },
+        factoryProducer = {
+            LocalAdapterViewModelFactory((requireActivity().application as MainApplication).applicationGraph)
+        }
+    )
 
     override fun onCreateView(
         inflater: LayoutInflater,

@@ -10,7 +10,9 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.jayden.bluetooth.MainApplication
 import com.jayden.bluetooth.app.viewmodel.main.pages.LocalAdapterViewModel
+import com.jayden.bluetooth.app.viewmodel.main.pages.LocalAdapterViewModelFactory
 import com.jayden.bluetooth.databinding.FragmentAdapterStateBinding
 import kotlinx.coroutines.launch
 
@@ -18,7 +20,12 @@ class AdapterStateFragment : Fragment() {
     private var _binding: FragmentAdapterStateBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel by viewModels<LocalAdapterViewModel>(ownerProducer = { requireParentFragment() })
+    private val viewModel by viewModels<LocalAdapterViewModel>(
+        ownerProducer = { requireParentFragment() },
+        factoryProducer = {
+            LocalAdapterViewModelFactory((requireActivity().application as MainApplication).applicationGraph)
+        }
+    )
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -43,7 +50,7 @@ class AdapterStateFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel
+
             }
         }
     }

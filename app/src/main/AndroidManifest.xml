@@ -10,6 +10,9 @@
     <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE"
         android:minSdkVersion="31"/>
 
+    <uses-permission android:name="android.permission.BLUETOOTH_PRIVILEGED"
+        android:minSdkVersion="19"/>
+
     <!-- legacy perms -->
     <uses-permission android:name="android.permission.BLUETOOTH"/>
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
@@ -19,7 +22,7 @@
     <uses-feature android:name="android.hardware.bluetooth_le"
         android:required="false"/>
 
-    <!-- optional location perms for more bluetooth info -->
+    <!-- optional location perms for more bluetooth info + scanning capabilities -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
 

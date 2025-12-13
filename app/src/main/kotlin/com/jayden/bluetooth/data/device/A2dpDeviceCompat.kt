@@ -23,7 +23,10 @@ import kotlinx.coroutines.flow.callbackFlow
 /**
  * subclass of [DeviceCompat] used for A2dp specific operations
  */
-class A2dpDeviceCompat(private val device: BluetoothDevice) : DeviceCompat(device) {
+class A2dpDeviceCompat(
+    private val device: BluetoothDevice,
+    private val proxy: BluetoothA2dp
+) : DeviceCompat(device) {
 
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     val playState: Flow<A2dpDeviceEvent> = callbackFlow {
@@ -50,6 +53,9 @@ class A2dpDeviceCompat(private val device: BluetoothDevice) : DeviceCompat(devic
                             `throw` = DevicePlayStateNotReceivedException()
                         )
                     )
+
+                } else if (device != this@A2dpDeviceCompat.device) {
+                    trySend(A2dpDeviceEvent.Error(msg = "received unrelated device, ignoring..."))
                 } else {
                     trySend(A2dpDeviceEvent.PlayState(state = state.playStateFromInt()))
                 }
@@ -68,7 +74,10 @@ class A2dpDeviceCompat(private val device: BluetoothDevice) : DeviceCompat(devic
         trySend(A2dpDeviceEvent.ConnectionState(state = ConnectionState.STATE_DISCONNECTED))
         val connectionStateReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
-                val device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
+                val device = intent.getParcelableExtra(
+                    BluetoothDevice.EXTRA_DEVICE,
+                    BluetoothDevice::class.java
+                )
                 val state = intent.getIntExtra(BluetoothProfile.EXTRA_STATE, BluetoothDevice.ERROR)
 
                 if (device == null) {
@@ -85,6 +94,9 @@ class A2dpDeviceCompat(private val device: BluetoothDevice) : DeviceCompat(devic
                             `throw` = DeviceConnectionStateNotReceivedException()
                         )
                     )
+
+                } else if (device != this@A2dpDeviceCompat.device) {
+                    trySend(A2dpDeviceEvent.Error(msg = "received unrelated device, ignoring..."))
                 } else {
                     trySend(A2dpDeviceEvent.ConnectionState(state = state.connectionStateFromInt()))
                 }

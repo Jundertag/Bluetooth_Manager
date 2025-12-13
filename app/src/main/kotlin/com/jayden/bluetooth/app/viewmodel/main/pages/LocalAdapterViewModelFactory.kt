@@ -10,7 +10,7 @@ class LocalAdapterViewModelFactory(
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return LocalAdapterViewModel(
-            appGraph.localAdapter
+            appGraph.localAdapterRepo
         ) as T
     }
 }

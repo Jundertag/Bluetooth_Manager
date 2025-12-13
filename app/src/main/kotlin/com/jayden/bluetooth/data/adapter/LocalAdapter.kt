@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothA2dp
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothHeadset
+import android.bluetooth.BluetoothHearingAid
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.content.BroadcastReceiver
@@ -26,6 +27,8 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
@@ -43,19 +46,15 @@ class LocalAdapter(
     val state: Flow<State> = callbackFlow {
         trySend(adapter.state.stateFromInt())
         val stateReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                val state =
-                    intent?.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)
-                        ?: BluetoothAdapter.ERROR
+            override fun onReceive(context: Context, intent: Intent) {
+                val state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)
 
                 trySend(state.stateFromInt())
             }
         }
         ctx.registerReceiver(stateReceiver, IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED))
 
-        awaitClose {
-            ctx.unregisterReceiver(stateReceiver)
-        }
+        awaitClose { ctx.unregisterReceiver(stateReceiver) }
     }
 
 
@@ -130,13 +129,13 @@ class LocalAdapter(
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     val name: Flow<String> = callbackFlow {
         @Suppress("MissingPermission")
-        trySend(adapter.name)
+        trySend(adapter.name ?: "<no-name>")
         val nameReceiver = object : BroadcastReceiver() {
             override fun onReceive(
                 context: Context,
                 intent: Intent
             ) {
-                trySend(intent.getStringExtra(BluetoothAdapter.EXTRA_LOCAL_NAME) ?: "")
+                trySend(intent.getStringExtra(BluetoothAdapter.EXTRA_LOCAL_NAME) ?: "<no-name>")
             }
         }
         ctx.registerReceiver(nameReceiver, IntentFilter(BluetoothAdapter.ACTION_LOCAL_NAME_CHANGED))
@@ -145,13 +144,11 @@ class LocalAdapter(
     }
 
     /**
-     * With the context of the profile, perform the specified operations...
-     *
-     * but wait! it's suspending!!!
+     * obtain the context of the profile requested and run [block] with the context of the [Profile]
      *
      * @throws IllegalStateException if profile type is not a parent subtype of [Profile]
      */
-    suspend inline fun <reified T : Profile> withProfile(block: T.() -> Unit) {
+    suspend inline fun <reified T : Profile, R> withProfile(block: T.() -> R): R {
         val (proxyType, profile) = when (T::class) {
             A2dpProfile::class -> {
                 ProfileProxy.A2DP to (getProfile(ProfileProxy.A2DP) as A2dpProfile)
@@ -159,10 +156,13 @@ class LocalAdapter(
             HeadsetProfile::class -> {
                 ProfileProxy.HEADSET to (getProfile(ProfileProxy.HEADSET) as HeadsetProfile)
             }
+            HearingAidProfile::class -> {
+                ProfileProxy.HEARING_AID to (getProfile(ProfileProxy.HEARING_AID) as HearingAidProfile)
+            }
             else -> error("profile ${T::class.simpleName} is not supported on android")
         }
 
-        try {
+        return try {
             (profile as T).block()
         } finally {
             adapter.closeProfileProxy(proxyType.proxyToInt(), profile.rawProfile)
@@ -183,6 +183,9 @@ class LocalAdapter(
                         ProfileProxy.HEADSET -> {
                             HeadsetProfile(proxy as BluetoothHeadset)
                         }
+                        ProfileProxy.HEARING_AID -> {
+                            HearingAidProfile(proxy as BluetoothHearingAid)
+                        }
                     }
                     it.resume(profileProxy)
                 }
@@ -200,10 +203,8 @@ class LocalAdapter(
 
     /**
      * [Flow] of discovered devices wrapped in a set of [DeviceEvent].
-     *
-     * @sample com.jayden.bluetooth.samples.DiscoveredDevicesSample
      */
-    @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
+    @RequiresPermission(allOf = [Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.ACCESS_FINE_LOCATION])
     val discoveredDevices: Flow<Set<DeviceEvent>> = callbackFlow {
         val devices: MutableSet<DeviceCompat> = mutableSetOf()
         val deviceReceiver = object : BroadcastReceiver() {
@@ -255,7 +256,8 @@ class LocalAdapter(
 
     enum class ProfileProxy(val num: Int) {
         HEADSET(1),
-        A2DP(2);
+        A2DP(2),
+        HEARING_AID(21);
 
         companion object {
             private val lookup = entries.associateBy { it.num }

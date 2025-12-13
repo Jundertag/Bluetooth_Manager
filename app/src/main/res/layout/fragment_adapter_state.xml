@@ -11,11 +11,12 @@
         android:id="@+id/local_adapter_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:paddingTop="12dp"
+        android:paddingStart="12dp"
         android:textStyle="bold"
         android:textSize="@dimen/text_title_size"
         android:textColor="?attr/colorOnBackground"
-        android:layout_marginTop="6dp"
-        android:layout_marginStart="12dp"
+        android:text="this is text text "
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
@@ -23,20 +24,22 @@
         android:id="@+id/local_adapter_profile_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:padding="12dp"
+        android:paddingBottom="12dp"
+        android:paddingStart="12dp"
         android:text="Profiles:"
         android:textStyle="bold"
-        android:textSize="@dimen/text_title_size"
+        android:textSize="@dimen/text_subtitle_size"
         android:textColor="?attr/colorOnSurface"
-        app:cardCornerRadius="@dimen/card_corner_radius"/>
+        app:layout_constraintTop_toBottomOf="@id/local_adapter_name"/>
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/local_adapter_a2dp_cardview"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="@dimen/card_padding"
         android:layout_marginHorizontal="18dp"
         app:cardBackgroundColor="?attr/colorSurface"
+        app:contentPadding="@dimen/card_padding"
+        app:cardCornerRadius="@dimen/card_corner_radius"
         app:layout_constraintTop_toBottomOf="@id/local_adapter_profile_title"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -62,6 +65,7 @@
                 app:layout_constraintTop_toBottomOf="@id/local_adapter_a2dp_title"/>
 
             <TextView
+                android:id="@+id/local_adapter_a2dp_play_state"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="not playing music"
@@ -76,10 +80,11 @@
         android:id="@+id/local_adapter_headset_cardview"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="@dimen/card_padding"
         android:layout_marginHorizontal="18dp"
         android:layout_marginTop="12dp"
         app:cardBackgroundColor="?attr/colorSurface"
+        app:contentPadding="@dimen/card_padding"
+        app:cardCornerRadius="@dimen/card_corner_radius"
         app:layout_constraintTop_toBottomOf="@id/local_adapter_a2dp_cardview"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -105,6 +110,7 @@
                 app:layout_constraintTop_toBottomOf="@id/local_adapter_headset_title"/>
 
             <TextView
+                android:id="@+id/local_adapter_headset_audio_connection_state"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="audio not connected"

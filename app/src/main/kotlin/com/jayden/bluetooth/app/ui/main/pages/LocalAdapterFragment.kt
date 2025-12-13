@@ -122,44 +122,6 @@ class LocalAdapterFragment : Fragment(R.layout.fragment_bluetooth_adapter) {
             addTab(newTab().setText("Scan").setTag(SCAN_FRAGMENT))
             Log.v(TAG, "addTab(newTab().setText(\"...\").setTag(CONST)) * 3")
         }
-
-        try {
-            viewModel.start()
-        } catch (e: AdapterNotOnException) {
-            Log.w(TAG, "Adapter is not on", e)
-            val launcher = requireActivity().registerForActivityResult(
-                ActivityResultContracts.StartActivityForResult()
-            ) { result ->
-                if (result.resultCode == Activity.RESULT_OK) {
-
-                }
-            }
-
-            if (PermissionHelper.isGrantedPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
-                launcher.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
-            }
-        } catch (e: SecurityException) {
-            viewLifecycleOwner.lifecycleScope.launch {
-                val permissionResults = PermissionHelper.requestPermissions(requireActivity(), arrayOf(
-                    Manifest.permission.BLUETOOTH_CONNECT,
-                    Manifest.permission.BLUETOOTH_SCAN,
-                    Manifest.permission.BLUETOOTH_ADVERTISE
-                ))
-
-                // loop through granted perms
-                for (result in permissionResults) {
-                    if (result.value) {
-                        Log.i(TAG, "permission: ${result.key}, has been granted.")
-                    } else {
-                        Log.i(TAG, "permission: ${result.key}, has not been granted.")
-                        if (result.key == Manifest.permission.BLUETOOTH_CONNECT) {
-                            Log.w(TAG, "permission needed has not been granted")
-                            Toast.makeText(context, "Permission BLUETOOTH_CONNECT has not been granted", Toast.LENGTH_LONG).show()
-                        }
-                    }
-                }
-            }
-        }
     }
 
     override fun onStart() {

@@ -29,7 +29,7 @@ class HeadsetProfile(
     val connectedDevices: Flow<Set<HeadsetDeviceEvent>> = callbackFlow {
         val connectedDevices = mutableSetOf<HeadsetDeviceEvent>()
         proxy.connectedDevices.forEach { device ->
-            connectedDevices.add(HeadsetDeviceEvent.Found(HeadsetDeviceCompat(device)))
+            connectedDevices.add(HeadsetDeviceEvent.Found(HeadsetDeviceCompat(device, proxy)))
         }
         trySend(connectedDevices)
 
@@ -53,7 +53,7 @@ class HeadsetProfile(
                                 )
                             )
                         } else {
-                            connectedDevices.add(HeadsetDeviceEvent.Found(HeadsetDeviceCompat(device)))
+                            connectedDevices.add(HeadsetDeviceEvent.Found(HeadsetDeviceCompat(device, proxy)))
                         }
                     }
 

@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import androidx.activity.result.ActivityResultCaller
 import androidx.activity.result.contract.ActivityResultContracts
-import com.jayden.bluetooth.utils.ContextUtils
 import com.jayden.bluetooth.utils.PermissionHelper.ProtectionLevel.Companion.fromInt
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
@@ -44,6 +43,41 @@ object PermissionHelper {
             }
 
             launcher.launch(permissions)
+        }
+    }
+
+    /**
+     * run [block] only when [permissions] are granted
+     *
+     * @return result of [block]
+     * @throws SecurityException if any of [permissions] aren't granted
+     */
+    suspend inline fun <T> runIfPermissionsGranted(permissions: Array<String>, crossinline block: suspend () -> T): T {
+        if (!isGrantedPermissions(permissions)) {
+            return block.invoke()
+        } else {
+            throw SecurityException()
+        }
+    }
+
+    /**
+     * run [block] only when [permissions] are granted
+     *
+     * @return null when any of [permissions] aren't granted
+     */
+    suspend inline fun <T> runIfPermissionsGrantedOrNull(permissions: Array<String>, crossinline block: suspend () -> T): T? {
+        return try {
+            runIfPermissionsGranted(permissions, block)
+        } catch (_: SecurityException) {
+            null
+        }
+    }
+
+    suspend inline fun <T> runIfPermissionsGrantedOrElse(permissions: Array<String>, crossinline block: suspend () -> T, crossinline `else`: suspend () -> T): T {
+        return try {
+            runIfPermissionsGranted(permissions, block)
+        } catch (_: SecurityException) {
+            `else`.invoke()
         }
     }
 
