@@ -59,14 +59,28 @@ class BoundDevicesFragment : Fragment() {
         }.also {
             Log.v(TAG, "set layoutManager to reference a new LinearLayoutManager\nset adapter to reference LocalDeviceAdapter for device display list")
         }
-
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.boundDevices.collect { devices ->
-                    adapter.submitList(devices.mapNotNull { it.ui.flowWithLifecycle(viewLifecycleOwner.lifecycle).firstOrNull() })
-                }
+                PermissionHelper.runIfPermissionsGrantedOrElse(
+                    permissions = arrayOf(Manifest.permission.BLUETOOTH_CONNECT),
+                    block = {
+                        viewModel.boundDevices.collect { devices ->
+                            adapter.submitList(devices.mapNotNull {
+                                it.ui.flowWithLifecycle(
+                                    viewLifecycleOwner.lifecycle
+                                ).firstOrNull()
+                            })
+                        }
+                    },
+                    `else` = {
+                        if (PermissionHelper.shouldRequestPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
+                            PermissionHelper.requestPermissions(requireActivity(), arrayOf(Manifest.permission.BLUETOOTH_CONNECT))
+                        }
+                    }
+                )
             }
         }
+
     }
 
     override fun onStart() {

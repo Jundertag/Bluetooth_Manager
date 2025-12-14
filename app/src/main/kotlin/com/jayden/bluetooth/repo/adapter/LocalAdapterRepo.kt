@@ -11,6 +11,7 @@ import com.jayden.bluetooth.utils.ContextUtils
 import com.jayden.bluetooth.utils.PermissionHelper
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterIsInstance
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.transform
@@ -62,8 +64,8 @@ class LocalAdapterRepo(
      * @throws TimeoutCancellationException if timeout exceeds.
      */
     suspend fun <T> withDiscovering(timeout: Long = 5_000, block: suspend () -> T): T {
+        @SuppressLint("MissingPermission")
         if (PermissionHelper.isGrantedPermission(Manifest.permission.BLUETOOTH_SCAN)) {
-            @SuppressLint("MissingPermission")
             adapter.startDiscovery()
             withTimeout(timeout) {
                 adapter.discovering.distinctUntilChanged().first { it }

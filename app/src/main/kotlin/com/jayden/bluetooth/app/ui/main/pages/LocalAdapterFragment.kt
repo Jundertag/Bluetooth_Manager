@@ -1,6 +1,7 @@
 package com.jayden.bluetooth.app.ui.main.pages
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.content.Intent
@@ -60,25 +61,6 @@ class LocalAdapterFragment : Fragment(R.layout.fragment_bluetooth_adapter) {
 
         override fun onTabReselected(tab: TabLayout.Tab?) {
             Log.d(TAG, "tabSelectedListener::onTabReselected(${tab?.text})")
-            for (fragment in fragments) {
-                val frag = getFragment(fragment)
-                if (frag != null)
-                Log.v(TAG, "${frag.tag}: hidden = ${frag.isHidden}, " +
-                        "added = ${frag.isAdded}, " +
-                        "detached = ${frag.isDetached}, " +
-                        "visible = ${frag.isVisible}, " +
-                        "viewVisibility = ${when (frag.view?.visibility) {
-                                View.VISIBLE -> "VISIBLE"
-                                View.GONE -> "GONE"
-                                View.INVISIBLE -> "INVISIBLE"
-                                null -> "null"
-                                else -> "<unknown state>"
-                            }
-                        } " +
-                        "hash = ${frag.hashCode()}, " +
-                        "viewHash = ${frag.view.hashCode()}"
-                )
-            }
         }
 
     }
@@ -89,7 +71,22 @@ class LocalAdapterFragment : Fragment(R.layout.fragment_bluetooth_adapter) {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentBluetoothAdapterBinding.inflate(inflater, container, false)
-        Log.v(TAG, "onCreateView(\n    inflater = $inflater, \n    container = $container, \n    savedInstanceState = $savedInstanceState\n): View = ${binding.root}")
+        Log.v(
+            TAG,
+            "onCreateView(\n    inflater = ${inflater::class.qualifiedName}, \n    container = ${
+                try {
+                    container!!::class.qualifiedName
+                } catch (_: NullPointerException) {
+                    "null"
+                }
+            }, \n    savedInstanceState = ${
+                try {
+                    savedInstanceState!!::class.qualifiedName
+                } catch (_: NullPointerException) {
+                    "null"
+                }
+            }\n): View = ${binding.root}"
+        )
         return binding.root
     }
 

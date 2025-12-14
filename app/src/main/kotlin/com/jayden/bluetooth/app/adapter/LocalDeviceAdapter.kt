@@ -18,7 +18,9 @@ class LocalDeviceAdapter : ListAdapter<DeviceCompatUi, LocalDeviceAdapter.ViewHo
     ): ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         val binding = ItemDeviceViewBinding.inflate(inflater, parent, false)
-        return ViewHolder(binding)
+        val viewHolder = ViewHolder(binding)
+        Log.v(TAG, "onCreateViewHolder(\n    parent = $parent,\n    viewType = $viewType\n): $viewHolder")
+        return viewHolder
     }
 
     override fun onBindViewHolder(
@@ -31,10 +33,13 @@ class LocalDeviceAdapter : ListAdapter<DeviceCompatUi, LocalDeviceAdapter.ViewHo
     class ViewHolder(
         private val binding: ItemDeviceViewBinding
     ) : RecyclerView.ViewHolder(binding.root) {
+
         fun bind(item: DeviceCompatUi) {
+            Log.v(TAG, "ViewHolder::bind(item = $item)")
             binding.deviceAddress.text = item.address
             binding.deviceTitle.text = item.name
             binding.deviceRssi.text = item.rssi
+            Log.d(TAG, "binding device information to xml elements.")
         }
     }
 

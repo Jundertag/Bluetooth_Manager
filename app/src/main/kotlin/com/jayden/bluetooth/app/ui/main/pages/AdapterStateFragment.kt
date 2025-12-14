@@ -1,5 +1,6 @@
 package com.jayden.bluetooth.app.ui.main.pages
 
+import android.Manifest
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -11,9 +12,13 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.jayden.bluetooth.MainApplication
+import com.jayden.bluetooth.app.ui.main.MainActivity
 import com.jayden.bluetooth.app.viewmodel.main.pages.LocalAdapterViewModel
 import com.jayden.bluetooth.app.viewmodel.main.pages.LocalAdapterViewModelFactory
 import com.jayden.bluetooth.databinding.FragmentAdapterStateBinding
+import com.jayden.bluetooth.utils.PermissionHelper
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.launch
 
 class AdapterStateFragment : Fragment() {
@@ -42,15 +47,9 @@ class AdapterStateFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.adapterName.collect { adapterName ->
-                    binding.localAdapterName.text = adapterName
+                viewModel.adapterName.collect { name ->
+                    
                 }
-            }
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-
             }
         }
     }
