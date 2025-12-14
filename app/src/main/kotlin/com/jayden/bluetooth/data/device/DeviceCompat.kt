@@ -142,6 +142,7 @@ open class DeviceCompat(
         if (!PermissionHelper.isGrantedPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
             throw SecurityException()
         } else {
+            @SuppressLint("MissingPermission")
             trySend(device.type.deviceTypeFromInt())
         }
     }

@@ -1,6 +1,7 @@
 package com.jayden.bluetooth.data.adapter
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothHeadset
 import android.content.BroadcastReceiver
@@ -28,6 +29,7 @@ class HeadsetProfile(
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     val connectedDevices: Flow<Set<HeadsetDeviceEvent>> = callbackFlow {
         val connectedDevices = mutableSetOf<HeadsetDeviceEvent>()
+        @SuppressLint("MissingPermission")
         proxy.connectedDevices.forEach { device ->
             connectedDevices.add(HeadsetDeviceEvent.Found(HeadsetDeviceCompat(device, proxy)))
         }
